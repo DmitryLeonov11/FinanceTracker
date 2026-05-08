@@ -1,0 +1,59 @@
+@FinanceTracker_Api_HostAddress = http://localhost:5050
+
+### Регистрация
+POST {{FinanceTracker_Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123",
+  "displayName": "Иван Иванов",
+  "displayCurrency": "BYN"
+}
+
+### Вход
+POST {{FinanceTracker_Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123"
+}
+
+### Обновление токена
+POST {{FinanceTracker_Api_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "<REFRESH_TOKEN>"
+}
+
+### Создание счёта
+POST {{FinanceTracker_Api_HostAddress}}/api/accounts
+Content-Type: application/json
+Authorization: Bearer <JWT>
+
+{
+  "name": "Основной счёт",
+  "type": 2,
+  "currency": "BYN",
+  "initialBalance": 100.00
+}
+
+### Добавление транзакции
+POST {{FinanceTracker_Api_HostAddress}}/api/transactions
+Content-Type: application/json
+Authorization: Bearer <JWT>
+
+{
+  "accountId": "<ACCOUNT_ID>",
+  "categoryId": null,
+  "type": 2,
+  "amount": 25.50,
+  "occurredAt": "2026-05-07T10:00:00Z",
+  "note": "Обед"
+}
+
+### Сводный баланс
+GET {{FinanceTracker_Api_HostAddress}}/api/dashboard/balance
+Authorization: Bearer <JWT>

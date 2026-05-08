@@ -1,0 +1,30 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+COPY ["src/FinanceTracker.Api/FinanceTracker.Api.csproj", "FinanceTracker.Api/"]
+COPY ["src/FinanceTracker.Application/FinanceTracker.Application.csproj", "FinanceTracker.Application/"]
+COPY ["src/FinanceTracker.Domain/FinanceTracker.Domain.csproj", "FinanceTracker.Domain/"]
+COPY ["src/FinanceTracker.Infrastructure/FinanceTracker.Infrastructure.csproj", "FinanceTracker.Infrastructure/"]
+RUN dotnet restore "./FinanceTracker.Api/FinanceTracker.Api.csproj"
+
+COPY src/ ./
+
+RUN dotnet tool install --global dotnet-ef --version 8.0.10
+ENV PATH="${PATH}:/root/.dotnet/tools"
+ENV ConnectionStrings__Default="Host=dummy;Database=dummy;Username=dummy;Password=dummy"
+ENV Jwt__SigningKey="DUMMY_KEY_FOR_BUNDLE_GENERATION_NEVER_USED_AT_RUNTIME_XXXX"
+
+WORKDIR /src/FinanceTracker.Api
+RUN dotnet ef migrations bundle \
+    --self-contained \
+    --runtime linux-x64 \
+    --configuration $BUILD_CONFIGURATION \
+    --project /src/FinanceTracker.Infrastructure/FinanceTracker.Infrastructure.csproj \
+    --startup-project /src/FinanceTracker.Api/FinanceTracker.Api.csproj \
+    --output /app/efbundle
+
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
+WORKDIR /app
+COPY --from=build /app/efbundle ./efbundle
+ENTRYPOINT ["/app/efbundle"]
