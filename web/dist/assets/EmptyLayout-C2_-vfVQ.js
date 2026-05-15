@@ -1,0 +1,1 @@
+import{o as n,c as r,m as a}from"./index-bUCjg-v0.js";const _=(t,e)=>{const o=t.__vccOpts||t;for(const[c,s]of e)o[c]=s;return o},f={},l={class:"min-h-dvh flex items-center justify-center bg-bg p-4"};function d(t,e){return n(),r("div",l,[a(t.$slots,"default")])}const m=_(f,[["render",d]]);export{m as default};
