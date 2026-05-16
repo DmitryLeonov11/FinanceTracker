@@ -1,0 +1,1 @@
+import{Ot as e,Tt as t,ut as n}from"./index-zfQSJmYP.js";var r=(e,t)=>{let n=e.__vccOpts||e;for(let[e,r]of t)n[e]=r;return n},i={},a={class:`min-h-dvh flex items-center justify-center bg-bg p-4`};function o(r,i){return t(),n(`div`,a,[e(r.$slots,`default`)])}var s=r(i,[[`render`,o]]);export{s as default};
