@@ -24,7 +24,7 @@ RUN dotnet ef migrations bundle \
     --startup-project /src/FinanceTracker.Api/FinanceTracker.Api.csproj \
     --output /app/efbundle
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0
 WORKDIR /app
 COPY --from=build /app/efbundle ./efbundle
 ENTRYPOINT ["/app/efbundle"]
