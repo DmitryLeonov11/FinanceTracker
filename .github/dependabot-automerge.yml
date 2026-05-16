@@ -1,0 +1,30 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 */2 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge on new Dependabot PR
+        if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge on existing Dependabot PRs
+        if: github.event_name == 'schedule'
+        run: |
+          gh pr list --base master --state open --author "dependabot[bot]" --json number --jq '.[] | .number' | while read pr; do
+            gh pr merge --auto --squash "$pr" || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
