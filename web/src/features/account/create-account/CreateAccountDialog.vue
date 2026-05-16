@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose
-} from 'radix-vue'
+} from 'reka-ui'
 
 import { Button, Input } from '@/shared/ui/primitives'
 import Field from '@/shared/ui/form/Field.vue'
