@@ -2,6 +2,7 @@ const dateLong = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long
 const dateShort = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
 const time = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' })
 const monthYear = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' })
+const dayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' })
 
 export function fmtDate(d: string | Date): string {
   return dateLong.format(new Date(d))
@@ -17,6 +18,10 @@ export function fmtTime(d: string | Date): string {
 
 export function fmtMonthYear(d: string | Date): string {
   return monthYear.format(new Date(d))
+}
+
+export function fmtDayMonth(d: string | Date): string {
+  return dayMonth.format(new Date(d))
 }
 
 export function fmtRelative(d: string | Date): string {

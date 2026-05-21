@@ -4,6 +4,9 @@ import { computed } from 'vue'
 import Icon from '@/shared/ui/icons/Icon.vue'
 import type { IconName } from '@/shared/ui/icons/paths'
 import ConnectionIndicator from '@/shared/ui/nav/ConnectionIndicator.vue'
+import CommandPalette from '@/widgets/CommandPalette/CommandPalette.vue'
+import CreateAccountDialog from '@/features/account/create-account/CreateAccountDialog.vue'
+import RecordTransactionDialog from '@/features/transaction/record-transaction/RecordTransactionDialog.vue'
 import { useAuthStore } from '@/shared/stores/auth'
 import { useUiStore } from '@/shared/stores/ui'
 import { t } from '@/shared/lib/i18n'
@@ -40,11 +43,12 @@ const initials = computed(() => {
     .toUpperCase()
 })
 
-const cycleTheme = () => {
-  const order = ['system', 'light', 'dark'] as const
-  const next = order[(order.indexOf(ui.themeMode) + 1) % order.length]
-  ui.setTheme(next)
-}
+const cycleTheme = () => ui.cycleTheme()
+
+const cmdKeyHint = computed(() => {
+  if (typeof navigator === 'undefined') return '⌘K'
+  return /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K'
+})
 
 const themeIcon = computed<IconName>(() =>
   ui.themeMode === 'system' ? 'monitor' : ui.themeMode === 'dark' ? 'moon' : 'sun'
@@ -129,6 +133,18 @@ async function handleLogout() {
         </button>
         <h1 class="text-[15px] font-semibold tracking-[-0.005em]">{{ route.meta.title }}</h1>
         <div class="ml-auto flex items-center gap-1">
+          <button
+            class="hidden sm:inline-flex items-center gap-2 h-9 pl-2.5 pr-1.5 rounded-md border border-border text-fg-muted hover:text-fg hover:bg-surface-hi hover:border-border-strong transition-colors"
+            @click="ui.toggleCommandPalette"
+          >
+            <Icon name="search" :size="14" />
+            <span class="text-[12px]">Команды</span>
+            <kbd
+              class="ml-1 inline-flex items-center justify-center min-w-[28px] h-5 px-1.5 rounded-sm border border-border bg-surface text-[10px] text-fg-subtle font-medium"
+            >
+              {{ cmdKeyHint }}
+            </kbd>
+          </button>
           <ConnectionIndicator class="mr-1" />
           <button
             class="inline-flex items-center justify-center size-9 rounded-md text-fg-muted hover:text-fg hover:bg-surface-hi transition-colors"
@@ -163,5 +179,10 @@ async function handleLogout() {
         <slot />
       </main>
     </div>
+
+    <!-- App-wide overlays -->
+    <CommandPalette />
+    <CreateAccountDialog v-model:open="ui.createAccountOpen" />
+    <RecordTransactionDialog v-model:open="ui.recordTransactionOpen" />
   </div>
 </template>

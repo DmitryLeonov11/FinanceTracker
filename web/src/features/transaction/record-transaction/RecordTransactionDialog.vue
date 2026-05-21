@@ -104,8 +104,12 @@ async function onSubmit(e: Event) {
   }
 
   try {
-    await mutateAsync(parsed.data)
-    toast.success(form.type === 'Income' ? 'Доход добавлен' : 'Расход добавлен')
+    const result = await mutateAsync(parsed.data)
+    if (result.queued) {
+      toast.info('Сохранено локально — отправим при появлении сети')
+    } else {
+      toast.success(form.type === 'Income' ? 'Доход добавлен' : 'Расход добавлен')
+    }
     emit('update:open', false)
   } catch (err) {
     if (err instanceof ApiError) {

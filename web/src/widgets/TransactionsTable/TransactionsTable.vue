@@ -4,6 +4,7 @@ import { Card, Skeleton, Button } from '@/shared/ui/primitives'
 import TransactionRow from '@/entities/transaction/ui/TransactionRow.vue'
 import Icon from '@/shared/ui/icons/Icon.vue'
 import { fmtDate } from '@/shared/lib/format/date'
+import { useOfflineQueue } from '@/shared/offline/useOfflineQueue'
 import type { Transaction } from '@/entities/transaction/model/schemas'
 import type { Account } from '@/entities/account/model/schemas'
 
@@ -20,6 +21,8 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{ loadMore: []; create: [] }>()
+
+const { pendingIds } = useOfflineQueue()
 
 const accountById = computed(() => {
   const map = new Map<string, Account>()
@@ -106,6 +109,7 @@ const groupedByDay = computed<DayGroup[]>(() => {
             :key="tx.id"
             :transaction="tx"
             :account-name="accountById.get(tx.accountId)?.name"
+            :pending="pendingIds.has(tx.id)"
           />
         </div>
       </Card>
