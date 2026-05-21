@@ -45,3 +45,36 @@ export interface TransactionFilters {
   page: number
   pageSize: number
 }
+
+export const EditTransactionCommandSchema = z.object({
+  amount: z.number().positive('Сумма должна быть больше 0'),
+  occurredAt: z.string(),
+  categoryId: z.string().uuid().nullable().optional(),
+  note: z.string().max(500, 'Не более 500 символов').nullable().optional()
+})
+export type EditTransactionCommand = z.infer<typeof EditTransactionCommandSchema>
+
+export const RecordTransferCommandSchema = z.object({
+  sourceAccountId: z.string().uuid('Выберите счёт-источник'),
+  destinationAccountId: z.string().uuid('Выберите счёт-получатель'),
+  amount: z.number().positive('Сумма должна быть больше 0'),
+  occurredAt: z.string(),
+  note: z.string().max(500, 'Не более 500 символов').nullable().optional()
+}).refine((v) => v.sourceAccountId !== v.destinationAccountId, {
+  message: 'Счёт-источник и счёт-получатель должны различаться',
+  path: ['destinationAccountId']
+})
+export type RecordTransferCommand = z.infer<typeof RecordTransferCommandSchema>
+
+export const TransferResultSchema = z.object({
+  transferGroupId: z.string().uuid(),
+  outgoingId: z.string().uuid(),
+  incomingId: z.string().uuid(),
+  sourceAccountId: z.string().uuid(),
+  destinationAccountId: z.string().uuid(),
+  amount: z.number(),
+  currency: CurrencySchema,
+  occurredAt: z.string(),
+  note: z.string().nullable()
+})
+export type TransferResult = z.infer<typeof TransferResultSchema>

@@ -15,6 +15,14 @@ export const commandSections: CommandSection[] = [
         run: ({ ui }) => ui.openRecordTransaction()
       },
       {
+        id: 'record-transfer',
+        title: 'Перевод между счетами',
+        hint: 'Между двумя счетами в одной валюте',
+        icon: 'swap',
+        keywords: ['transfer', 'перевод', 'между', 'счетами'],
+        run: ({ ui }) => ui.openRecordTransfer()
+      },
+      {
         id: 'create-account',
         title: 'Создать счёт',
         hint: 'Кошелёк, карта, крипто',

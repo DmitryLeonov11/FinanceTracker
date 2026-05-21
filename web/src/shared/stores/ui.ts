@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useStorage, usePreferredDark } from '@vueuse/core'
+import type { Transaction } from '@/entities/transaction/model/schemas'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -17,6 +18,9 @@ export const useUiStore = defineStore('ui', () => {
   const commandPaletteOpen = ref(false)
   const createAccountOpen = ref(false)
   const recordTransactionOpen = ref(false)
+  const recordTransferOpen = ref(false)
+  const editingTransaction = ref<Transaction | null>(null)
+  const deletingTransaction = ref<Transaction | null>(null)
 
   watch(
     isDark,
@@ -56,6 +60,33 @@ export const useUiStore = defineStore('ui', () => {
     recordTransactionOpen.value = true
   }
 
+  function openRecordTransfer() {
+    commandPaletteOpen.value = false
+    recordTransferOpen.value = true
+  }
+
+  function closeRecordTransfer() {
+    recordTransferOpen.value = false
+  }
+
+  function openEditTransaction(tx: Transaction) {
+    commandPaletteOpen.value = false
+    editingTransaction.value = tx
+  }
+
+  function closeEditTransaction() {
+    editingTransaction.value = null
+  }
+
+  function confirmDeleteTransaction(tx: Transaction) {
+    commandPaletteOpen.value = false
+    deletingTransaction.value = tx
+  }
+
+  function dismissDeleteTransaction() {
+    deletingTransaction.value = null
+  }
+
   function cycleTheme() {
     const order: ThemeMode[] = ['system', 'light', 'dark']
     themeMode.value = order[(order.indexOf(themeMode.value) + 1) % order.length] ?? 'system'
@@ -69,11 +100,20 @@ export const useUiStore = defineStore('ui', () => {
     commandPaletteOpen,
     createAccountOpen,
     recordTransactionOpen,
+    recordTransferOpen,
+    editingTransaction,
+    deletingTransaction,
     setTheme,
     toggleSidebar,
     toggleCommandPalette,
     openCreateAccount,
     openRecordTransaction,
+    openRecordTransfer,
+    closeRecordTransfer,
+    openEditTransaction,
+    closeEditTransaction,
+    confirmDeleteTransaction,
+    dismissDeleteTransaction,
     cycleTheme
   }
 })

@@ -20,7 +20,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ loadMore: []; create: [] }>()
+const emit = defineEmits<{
+  loadMore: []
+  create: []
+  edit: [tx: Transaction]
+  delete: [tx: Transaction]
+}>()
 
 const { pendingIds } = useOfflineQueue()
 
@@ -110,6 +115,8 @@ const groupedByDay = computed<DayGroup[]>(() => {
             :transaction="tx"
             :account-name="accountById.get(tx.accountId)?.name"
             :pending="pendingIds.has(tx.id)"
+            @edit="emit('edit', $event)"
+            @delete="emit('delete', $event)"
           />
         </div>
       </Card>

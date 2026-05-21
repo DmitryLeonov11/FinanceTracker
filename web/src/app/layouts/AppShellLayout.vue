@@ -7,6 +7,8 @@ import ConnectionIndicator from '@/shared/ui/nav/ConnectionIndicator.vue'
 import CommandPalette from '@/widgets/CommandPalette/CommandPalette.vue'
 import CreateAccountDialog from '@/features/account/create-account/CreateAccountDialog.vue'
 import RecordTransactionDialog from '@/features/transaction/record-transaction/RecordTransactionDialog.vue'
+import RecordTransferDialog from '@/features/transaction/record-transfer/RecordTransferDialog.vue'
+import DeleteTransactionConfirm from '@/features/transaction/delete-transaction/DeleteTransactionConfirm.vue'
 import { useAuthStore } from '@/shared/stores/auth'
 import { useUiStore } from '@/shared/stores/ui'
 import { t } from '@/shared/lib/i18n'
@@ -183,6 +185,8 @@ async function handleLogout() {
     <!-- App-wide overlays -->
     <CommandPalette />
     <CreateAccountDialog v-model:open="ui.createAccountOpen" />
-    <RecordTransactionDialog v-model:open="ui.recordTransactionOpen" />
+    <RecordTransactionDialog />
+    <RecordTransferDialog />
+    <DeleteTransactionConfirm />
   </div>
 </template>

@@ -82,7 +82,10 @@ watch(
           <span v-if="data">{{ data.total }} {{ data.total === 1 ? 'запись' : data.total < 5 ? 'записи' : 'записей' }} в выбранном периоде</span>
         </p>
       </div>
-      <Button icon-left="plus" @click="ui.openRecordTransaction">Новая операция</Button>
+      <div class="flex items-center gap-2">
+        <Button intent="secondary" icon-left="swap" @click="ui.openRecordTransfer">Перевод</Button>
+        <Button icon-left="plus" @click="ui.openRecordTransaction">Новая операция</Button>
+      </div>
     </header>
 
     <TransactionFiltersBar
@@ -105,6 +108,8 @@ watch(
       :has-more="data?.hasMore ?? false"
       @load-more="page = page + 1"
       @create="ui.openRecordTransaction"
+      @edit="ui.openEditTransaction"
+      @delete="ui.confirmDeleteTransaction"
     />
   </div>
 </template>
