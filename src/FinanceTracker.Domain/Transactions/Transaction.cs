@@ -102,6 +102,25 @@ public sealed class Transaction : AggregateRoot
         return (outgoing, incoming);
     }
 
+    public void Edit(Money amount, Guid? categoryId, DateTimeOffset occurredAt, string? note)
+    {
+        if (IsDeleted)
+            throw new DomainException("Удалённая операция не может быть изменена.");
+        if (Type == TransactionType.Transfer)
+            throw new DomainException("Переводы не редактируются — удалите и создайте заново.");
+
+        ValidatePositive(amount);
+        if (!amount.Currency.Equals(Amount.Currency))
+            throw new CurrencyMismatchException(Amount.Currency.Code, amount.Currency.Code);
+
+        Amount = amount;
+        CategoryId = categoryId;
+        OccurredAt = occurredAt;
+        Note = NormalizeNote(note);
+        UpdatedAt = DateTimeOffset.UtcNow;
+        Version++;
+    }
+
     public void SoftDelete()
     {
         IsDeleted = true;

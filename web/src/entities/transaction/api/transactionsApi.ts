@@ -2,10 +2,14 @@ import { http } from '@/shared/api/http'
 import {
   PagedTransactionsSchema,
   TransactionSchema,
+  TransferResultSchema,
   type AddTransactionCommand,
+  type EditTransactionCommand,
   type PagedTransactions,
+  type RecordTransferCommand,
   type Transaction,
-  type TransactionFilters
+  type TransactionFilters,
+  type TransferResult
 } from '../model/schemas'
 
 export const transactionsApi = {
@@ -29,5 +33,22 @@ export const transactionsApi = {
       : undefined
     const { data } = await http.post('/transactions', cmd, config)
     return TransactionSchema.parse(data)
+  },
+
+  async update(id: string, cmd: EditTransactionCommand, idempotencyKey?: string): Promise<Transaction> {
+    const config = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
+    const { data } = await http.patch(`/transactions/${id}`, cmd, config)
+    return TransactionSchema.parse(data)
+  },
+
+  async remove(id: string, idempotencyKey?: string): Promise<void> {
+    const config = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
+    await http.delete(`/transactions/${id}`, config)
+  },
+
+  async transfer(cmd: RecordTransferCommand, idempotencyKey?: string): Promise<TransferResult> {
+    const config = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
+    const { data } = await http.post('/transactions/transfer', cmd, config)
+    return TransferResultSchema.parse(data)
   }
 }
