@@ -14,7 +14,7 @@
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
     "@sentry/vue": "^10.53.1",
-    "@tanstack/vue-query": "^5.100.10",
+    "@tanstack/vue-query": "^5.100.11",
     "@vee-validate/zod": "^4.15.1",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.16.1",
