@@ -1,4 +1,5 @@
 using FinanceTracker.Application.Dashboard.Models;
+using FinanceTracker.Application.Dashboard.Queries.GetCashflow;
 using FinanceTracker.Application.Dashboard.Queries.GetDashboardBalance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,4 +15,13 @@ public sealed class DashboardController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<DashboardBalanceDto>> Balance(CancellationToken cancellationToken)
         => Ok(await Sender.Send(new GetDashboardBalanceQuery(), cancellationToken));
+
+    [HttpGet("cashflow")]
+    [ProducesResponseType(typeof(CashflowDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<CashflowDto>> Cashflow(
+        [FromQuery] int days = 30,
+        [FromQuery] string? currency = null,
+        CancellationToken cancellationToken = default)
+        => Ok(await Sender.Send(new GetCashflowQuery(days, currency), cancellationToken));
 }

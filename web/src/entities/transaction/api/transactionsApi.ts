@@ -23,8 +23,11 @@ export const transactionsApi = {
     return PagedTransactionsSchema.parse(data)
   },
 
-  async create(cmd: AddTransactionCommand): Promise<Transaction> {
-    const { data } = await http.post('/transactions', cmd)
+  async create(cmd: AddTransactionCommand, idempotencyKey?: string): Promise<Transaction> {
+    const config = idempotencyKey
+      ? { headers: { 'Idempotency-Key': idempotencyKey } }
+      : undefined
+    const { data } = await http.post('/transactions', cmd, config)
     return TransactionSchema.parse(data)
   }
 }
