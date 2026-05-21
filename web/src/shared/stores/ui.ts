@@ -15,6 +15,8 @@ export const useUiStore = defineStore('ui', () => {
   )
 
   const commandPaletteOpen = ref(false)
+  const createAccountOpen = ref(false)
+  const recordTransactionOpen = ref(false)
 
   watch(
     isDark,
@@ -44,14 +46,34 @@ export const useUiStore = defineStore('ui', () => {
     commandPaletteOpen.value = !commandPaletteOpen.value
   }
 
+  function openCreateAccount() {
+    commandPaletteOpen.value = false
+    createAccountOpen.value = true
+  }
+
+  function openRecordTransaction() {
+    commandPaletteOpen.value = false
+    recordTransactionOpen.value = true
+  }
+
+  function cycleTheme() {
+    const order: ThemeMode[] = ['system', 'light', 'dark']
+    themeMode.value = order[(order.indexOf(themeMode.value) + 1) % order.length] ?? 'system'
+  }
+
   return {
     themeMode,
     isDark,
     sidebarCollapsed,
     density,
     commandPaletteOpen,
+    createAccountOpen,
+    recordTransactionOpen,
     setTheme,
     toggleSidebar,
-    toggleCommandPalette
+    toggleCommandPalette,
+    openCreateAccount,
+    openRecordTransaction,
+    cycleTheme
   }
 })

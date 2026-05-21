@@ -4,16 +4,18 @@ import { ref, computed, watch } from 'vue'
 import { Button } from '@/shared/ui/primitives'
 import TransactionFiltersBar from '@/widgets/TransactionFiltersBar/TransactionFiltersBar.vue'
 import TransactionsTable from '@/widgets/TransactionsTable/TransactionsTable.vue'
-import RecordTransactionDialog from '@/features/transaction/record-transaction/RecordTransactionDialog.vue'
 
 import { useTransactions } from '@/entities/transaction/api/useTransactions'
 import { useAccounts } from '@/entities/account/api/useAccounts'
+import { useUiStore } from '@/shared/stores/ui'
 import { useRealtimeInvalidation } from '@/shared/composables/useRealtimeInvalidation'
 
 import type { Transaction, TransactionFilters, TransactionType } from '@/entities/transaction/model/schemas'
 import { rangeForPreset, type PeriodPreset } from '@/widgets/TransactionFiltersBar/periods'
 
 useRealtimeInvalidation()
+
+const ui = useUiStore()
 
 const PAGE_SIZE = 50
 
@@ -69,7 +71,6 @@ watch(
   { immediate: true }
 )
 
-const recordOpen = ref(false)
 </script>
 
 <template>
@@ -81,7 +82,7 @@ const recordOpen = ref(false)
           <span v-if="data">{{ data.total }} {{ data.total === 1 ? 'запись' : data.total < 5 ? 'записи' : 'записей' }} в выбранном периоде</span>
         </p>
       </div>
-      <Button icon-left="plus" @click="recordOpen = true">Новая операция</Button>
+      <Button icon-left="plus" @click="ui.openRecordTransaction">Новая операция</Button>
     </header>
 
     <TransactionFiltersBar
@@ -103,9 +104,7 @@ const recordOpen = ref(false)
       :total="data?.total ?? 0"
       :has-more="data?.hasMore ?? false"
       @load-more="page = page + 1"
-      @create="recordOpen = true"
+      @create="ui.openRecordTransaction"
     />
-
-    <RecordTransactionDialog v-model:open="recordOpen" />
   </div>
 </template>

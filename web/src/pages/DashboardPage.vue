@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import DashboardSummary from '@/widgets/DashboardSummary/DashboardSummary.vue'
+import CashflowChart from '@/widgets/CashflowChart/CashflowChart.vue'
 import AccountsList from '@/widgets/AccountsList/AccountsList.vue'
-import CreateAccountDialog from '@/features/account/create-account/CreateAccountDialog.vue'
 import { useAuthStore } from '@/shared/stores/auth'
+import { useUiStore } from '@/shared/stores/ui'
 import { useRealtimeInvalidation } from '@/shared/composables/useRealtimeInvalidation'
 
 const auth = useAuthStore()
+const ui = useUiStore()
 
 useRealtimeInvalidation()
-
-const createOpen = ref(false)
 
 const greeting = computed(() => {
   const h = new Date().getHours()
@@ -29,8 +29,7 @@ const greeting = computed(() => {
     </header>
 
     <DashboardSummary />
-    <AccountsList :on-create="() => (createOpen = true)" />
-
-    <CreateAccountDialog v-model:open="createOpen" />
+    <CashflowChart />
+    <AccountsList :on-create="ui.openCreateAccount" />
   </div>
 </template>
