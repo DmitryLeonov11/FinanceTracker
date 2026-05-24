@@ -1,5 +1,7 @@
 using System.Reflection;
 using FinanceTracker.Application.Common.Behaviors;
+using FinanceTracker.Application.Common.Interfaces;
+using FinanceTracker.Application.Fx;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,7 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<IMoneyConverter, MoneyConverter>();
 
         return services;
     }

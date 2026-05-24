@@ -2,6 +2,8 @@ namespace FinanceTracker.Application.Dashboard.Models;
 
 public sealed record DashboardBalanceDto(
     string DisplayCurrency,
+    decimal GrandTotal,
+    bool GrandTotalIsApproximate,
     IReadOnlyCollection<CurrencyBalance> BalancesByCurrency,
     IReadOnlyCollection<AccountBalance> Accounts);
 

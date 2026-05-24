@@ -1,9 +1,9 @@
 using FinanceTracker.Application.Common.Exceptions;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Application.Transactions.Models;
-using FinanceTracker.Domain.Exceptions;
 using FinanceTracker.Domain.Transactions;
 using FinanceTracker.Domain.ValueObjects;
+using FluentValidation.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,15 +14,18 @@ public sealed class RecordTransferCommandHandler : IRequestHandler<RecordTransfe
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IRealtimeNotifier _notifier;
+    private readonly IMoneyConverter _converter;
 
     public RecordTransferCommandHandler(
         IApplicationDbContext db,
         ICurrentUser currentUser,
-        IRealtimeNotifier notifier)
+        IRealtimeNotifier notifier,
+        IMoneyConverter converter)
     {
         _db = db;
         _currentUser = currentUser;
         _notifier = notifier;
+        _converter = converter;
     }
 
     public async Task<TransferDto> Handle(RecordTransferCommand request, CancellationToken cancellationToken)
@@ -37,23 +40,52 @@ public sealed class RecordTransferCommandHandler : IRequestHandler<RecordTransfe
             .SingleOrDefaultAsync(a => a.Id == request.DestinationAccountId && a.UserId == userId, cancellationToken)
             ?? throw new NotFoundException("Счёт-получатель", request.DestinationAccountId);
 
-        if (!source.Currency.Equals(destination.Currency))
-            throw new DomainException(
-                "Перевод между счетами в разных валютах появится вместе с FX-модулем. Сейчас валюты счетов должны совпадать.");
+        var sameCurrency = source.Currency.Equals(destination.Currency);
 
-        var amount = Money.Of(request.Amount, source.Currency);
+        Money sourceAmount;
+        Money destinationAmount;
+        decimal? appliedRate = null;
+
+        if (sameCurrency)
+        {
+            sourceAmount = Money.Of(request.Amount, source.Currency);
+            destinationAmount = sourceAmount;
+        }
+        else
+        {
+            if (!request.DestinationAmount.HasValue || request.DestinationAmount.Value <= 0)
+            {
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(
+                        nameof(RecordTransferCommand.DestinationAmount),
+                        "Для перевода между разными валютами укажите сумму зачисления.")
+                });
+            }
+
+            sourceAmount = Money.Of(request.Amount, source.Currency);
+            destinationAmount = Money.Of(request.DestinationAmount.Value, destination.Currency);
+
+            // Зафиксируем курс на момент перевода для audit-следа.
+            var conversion = await _converter.ConvertAsync(
+                Money.Of(1m, source.Currency),
+                destination.Currency,
+                asOf: null,
+                cancellationToken);
+            appliedRate = conversion.RateApplied;
+        }
 
         var (outgoing, incoming) = Transaction.RecordTransfer(
             userId,
             source.Id,
             destination.Id,
-            amount,
-            amount,
+            sourceAmount,
+            destinationAmount,
             request.OccurredAt,
             request.Note);
 
-        source.Apply(amount.Negate());
-        destination.Apply(amount);
+        source.Apply(sourceAmount.Negate());
+        destination.Apply(destinationAmount);
 
         _db.Transactions.Add(outgoing);
         _db.Transactions.Add(incoming);
@@ -71,8 +103,10 @@ public sealed class RecordTransferCommandHandler : IRequestHandler<RecordTransfe
                 IncomingId = incoming.Id,
                 SourceAccountId = source.Id,
                 DestinationAccountId = destination.Id,
-                Amount = amount.Amount,
-                Currency = amount.Currency.Code
+                Amount = sourceAmount.Amount,
+                Currency = sourceAmount.Currency.Code,
+                DestinationAmount = destinationAmount.Amount,
+                DestinationCurrency = destinationAmount.Currency.Code
             },
             cancellationToken);
 
@@ -93,8 +127,11 @@ public sealed class RecordTransferCommandHandler : IRequestHandler<RecordTransfe
             incoming.Id,
             source.Id,
             destination.Id,
-            amount.Amount,
-            amount.Currency.Code,
+            sourceAmount.Amount,
+            sourceAmount.Currency.Code,
+            destinationAmount.Amount,
+            destinationAmount.Currency.Code,
+            appliedRate,
             outgoing.OccurredAt,
             outgoing.Note);
     }

@@ -12,18 +12,19 @@ const { data, isPending, isError, refetch } = useDashboardBalance()
 
 const accountsCount = computed(() => data.value?.accounts.length ?? 0)
 
-const primaryCurrency = computed<CurrencyCode>(() => data.value?.displayCurrency ?? 'BYN')
+const displayCurrency = computed<CurrencyCode>(() => data.value?.displayCurrency ?? 'BYN')
 
-const primaryTotal = computed(() => {
+const grandTotal = computed(() => data.value?.grandTotal ?? 0)
+const isApproximate = computed(() => data.value?.grandTotalIsApproximate ?? false)
+
+const breakdownCurrencies = computed(() => {
   const all = data.value?.balancesByCurrency ?? []
-  return all.find((b) => b.currency === primaryCurrency.value)?.total ?? 0
+  // Show all currencies as breakdown when multi-currency; for single currency,
+  // hide breakdown because GrandTotal already shows the only number.
+  return all.length > 1 ? all : []
 })
 
-const otherCurrencies = computed(
-  () => (data.value?.balancesByCurrency ?? []).filter((b) => b.currency !== primaryCurrency.value)
-)
-
-const flash = useFlash(primaryTotal)
+const flash = useFlash(grandTotal)
 </script>
 
 <template>
@@ -60,17 +61,18 @@ const flash = useFlash(primaryTotal)
             <p class="text-[13px] text-fg-muted uppercase tracking-wider font-medium">
               Чистая стоимость
             </p>
-            <div class="mt-2">
+            <div class="mt-2 flex items-baseline gap-2">
+              <span v-if="isApproximate" class="text-fg-muted text-[28px] font-semibold leading-none" :title="'Курсы валют устарели — сумма приблизительная'">≈</span>
               <Money
-                :amount="primaryTotal"
-                :currency="primaryCurrency"
+                :amount="grandTotal"
+                :currency="displayCurrency"
                 size="2xl"
                 animate
                 :duration="600"
               />
             </div>
             <p class="mt-2 text-[13px] text-fg-subtle">
-              {{ CURRENCY_LABELS[primaryCurrency] }} ·
+              {{ CURRENCY_LABELS[displayCurrency] }} ·
               <span v-if="accountsCount === 0">нет счетов</span>
               <span v-else>
                 на {{ accountsCount }}
@@ -86,12 +88,12 @@ const flash = useFlash(primaryTotal)
           </div>
         </div>
 
-        <div v-if="otherCurrencies.length" class="mt-6 pt-5 border-t border-border">
+        <div v-if="breakdownCurrencies.length" class="mt-6 pt-5 border-t border-border">
           <p class="text-[12px] uppercase tracking-wider font-medium text-fg-subtle mb-3">
-            В других валютах
+            Из них по валютам
           </p>
           <div class="flex flex-wrap gap-x-8 gap-y-3">
-            <div v-for="b in otherCurrencies" :key="b.currency" class="flex flex-col">
+            <div v-for="b in breakdownCurrencies" :key="b.currency" class="flex flex-col">
               <span class="text-[11px] text-fg-subtle uppercase tracking-wider">{{ b.currency }}</span>
               <Money
                 :amount="b.total"

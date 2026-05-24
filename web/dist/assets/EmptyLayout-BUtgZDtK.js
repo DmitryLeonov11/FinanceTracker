@@ -1,0 +1,1 @@
+import{Dt as e,Wt as t,qt as n}from"./index-DiZV-UD_.js";var r=(e,t)=>{let n=e.__vccOpts||e;for(let[e,r]of t)n[e]=r;return n},i={},a={class:`min-h-dvh flex items-center justify-center bg-bg p-4`};function o(r,i){return t(),e(`div`,a,[n(r.$slots,`default`)])}var s=r(i,[[`render`,o]]);export{s as default};

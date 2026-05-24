@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed, watch } from 'vue'
+import { reactive, computed, watch, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   DialogRoot,
@@ -17,10 +17,12 @@ import Icon from '@/shared/ui/icons/Icon.vue'
 import { RecordTransferCommandSchema, type RecordTransferCommand } from '@/entities/transaction/model/schemas'
 import { useRecordTransfer } from '@/entities/transaction/api/useRecordTransfer'
 import { useAccounts } from '@/entities/account/api/useAccounts'
+import { useConvertMoney } from '@/entities/fx/api/useConvertMoney'
 import { useUiStore } from '@/shared/stores/ui'
 import { ApiError } from '@/shared/api/errors'
 import { cn } from '@/shared/lib/cn'
 import { t } from '@/shared/lib/i18n'
+import type { CurrencyCode } from '@/shared/config/currencies'
 
 const ui = useUiStore()
 const { data: accountsData } = useAccounts()
@@ -29,6 +31,8 @@ interface FormState {
   sourceAccountId: string
   destinationAccountId: string
   amount: string
+  destinationAmount: string
+  destinationAmountTouched: boolean
   occurredAt: string
   note: string
 }
@@ -40,6 +44,8 @@ function defaultForm(): FormState {
     sourceAccountId: '',
     destinationAccountId: '',
     amount: '',
+    destinationAmount: '',
+    destinationAmountTouched: false,
     occurredAt: local.toISOString().slice(0, 16),
     note: ''
   }
@@ -54,22 +60,53 @@ const sourceAccount = computed(() =>
   accountsData.value?.find((a) => a.id === form.sourceAccountId) ?? null
 )
 
-/** Only same-currency destinations are valid in v1. */
+const destinationAccount = computed(() =>
+  accountsData.value?.find((a) => a.id === form.destinationAccountId) ?? null
+)
+
 const destinationCandidates = computed(() => {
   const list = accountsData.value ?? []
   if (!form.sourceAccountId) return list
-  const src = list.find((a) => a.id === form.sourceAccountId)
-  if (!src) return list
-  return list.filter((a) => a.id !== src.id && a.currency === src.currency)
+  return list.filter((a) => a.id !== form.sourceAccountId)
 })
 
-const hasCrossCurrencyAccounts = computed(() => {
-  const list = accountsData.value ?? []
-  if (list.length < 2 || !form.sourceAccountId) return false
-  const src = list.find((a) => a.id === form.sourceAccountId)
-  if (!src) return false
-  return list.some((a) => a.id !== src.id && a.currency !== src.currency)
+const isCrossCurrency = computed(() => {
+  if (!sourceAccount.value || !destinationAccount.value) return false
+  return sourceAccount.value.currency !== destinationAccount.value.currency
 })
+
+const debouncedAmount = ref(0)
+let amountTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => form.amount,
+  (v) => {
+    if (amountTimer) clearTimeout(amountTimer)
+    amountTimer = setTimeout(() => {
+      debouncedAmount.value = Number(v.replace(',', '.')) || 0
+    }, 250)
+  }
+)
+
+const convertEnabled = computed(
+  () => isCrossCurrency.value && !form.destinationAmountTouched && debouncedAmount.value > 0
+)
+
+const conversion = useConvertMoney({
+  amount: debouncedAmount,
+  from: computed(() => (sourceAccount.value?.currency as CurrencyCode | undefined) ?? null),
+  to: computed(() => (destinationAccount.value?.currency as CurrencyCode | undefined) ?? null),
+  enabled: convertEnabled
+})
+
+// Pre-fill destination amount with the converter suggestion, unless user already typed it.
+watch(
+  () => conversion.data.value,
+  (d) => {
+    if (!d) return
+    if (!isCrossCurrency.value || form.destinationAmountTouched) return
+    form.destinationAmount = d.targetAmount.toFixed(2).replace('.', ',')
+  }
+)
 
 watch(
   () => ui.recordTransferOpen,
@@ -77,33 +114,50 @@ watch(
     if (open) {
       Object.assign(form, defaultForm())
       Object.keys(errors).forEach((k) => delete errors[k])
+      debouncedAmount.value = 0
       const list = accountsData.value ?? []
       if (list.length >= 1) form.sourceAccountId = list[0]!.id
     }
   }
 )
 
-// reset destination if source changes (different-currency accounts become invalid)
 watch(
   () => form.sourceAccountId,
   () => {
     if (form.destinationAccountId && !destinationCandidates.value.some((a) => a.id === form.destinationAccountId)) {
       form.destinationAccountId = ''
     }
+    form.destinationAmount = ''
+    form.destinationAmountTouched = false
   }
 )
+
+watch(
+  () => form.destinationAccountId,
+  () => {
+    if (!form.destinationAmountTouched) form.destinationAmount = ''
+  }
+)
+
+function onDestinationAmountInput(v: string) {
+  form.destinationAmount = v
+  form.destinationAmountTouched = v.trim().length > 0
+}
 
 async function onSubmit(e: Event) {
   e.preventDefault()
   Object.keys(errors).forEach((k) => delete errors[k])
 
   const amount = Number(form.amount.replace(',', '.'))
+  const destAmount = Number(form.destinationAmount.replace(',', '.'))
   const occurredIso = new Date(form.occurredAt).toISOString()
 
   const cmd: RecordTransferCommand = {
     sourceAccountId: form.sourceAccountId,
     destinationAccountId: form.destinationAccountId,
     amount: Number.isFinite(amount) ? amount : 0,
+    destinationAmount:
+      isCrossCurrency.value && Number.isFinite(destAmount) && destAmount > 0 ? destAmount : null,
     occurredAt: occurredIso,
     note: form.note.trim() || null
   }
@@ -114,6 +168,11 @@ async function onSubmit(e: Event) {
       const k = String(issue.path[0])
       if (!errors[k]) errors[k] = issue.message
     }
+    return
+  }
+
+  if (isCrossCurrency.value && !cmd.destinationAmount) {
+    errors.destinationAmount = 'Укажите сумму зачисления'
     return
   }
 
@@ -156,7 +215,7 @@ async function onSubmit(e: Event) {
                 Перевод между счетами
               </DialogTitle>
               <DialogDescription class="sr-only">
-                Переместить деньги между двумя счетами в одной валюте.
+                Переместить деньги между двумя счетами, включая разные валюты.
               </DialogDescription>
             </div>
           </div>
@@ -214,21 +273,14 @@ async function onSubmit(e: Event) {
               </button>
             </div>
             <p v-else-if="form.sourceAccountId" class="text-[13px] text-fg-subtle">
-              Нет других счетов в той же валюте.
+              Нет других счетов.
             </p>
             <p v-else class="text-[13px] text-fg-subtle">Сначала выберите счёт-источник.</p>
-
-            <p
-              v-if="hasCrossCurrencyAccounts"
-              class="text-[12px] text-fg-subtle mt-2"
-            >
-              Кросс-валютные переводы появятся вместе с FX-модулем.
-            </p>
           </Field>
 
           <Field
-            label="Сумма"
-            :hint="sourceAccount ? `Переводим в ${sourceAccount.currency}` : undefined"
+            label="Списать со счёта-источника"
+            :hint="sourceAccount ? `в ${sourceAccount.currency}` : undefined"
             :error="errors.amount"
             required
           >
@@ -242,6 +294,35 @@ async function onSubmit(e: Event) {
               />
             </template>
           </Field>
+
+          <div v-if="isCrossCurrency" class="space-y-1.5">
+            <Field
+              label="Зачислить на счёт-получатель"
+              :hint="destinationAccount ? `в ${destinationAccount.currency}` : undefined"
+              :error="errors.destinationAmount"
+              required
+            >
+              <template #default="{ invalid }">
+                <Input
+                  :model-value="form.destinationAmount"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  size="lg"
+                  :invalid="invalid"
+                  @update:model-value="onDestinationAmountInput"
+                />
+              </template>
+            </Field>
+            <p v-if="conversion.data.value" class="text-[12px] text-fg-subtle">
+              1 {{ conversion.data.value.sourceCurrency }} ≈
+              {{ conversion.data.value.rateApplied.toFixed(4) }}
+              {{ conversion.data.value.targetCurrency }}
+              <span class="text-fg-subtle/70">· курс на {{ conversion.data.value.rateDate }}</span>
+            </p>
+            <p v-else-if="conversion.isFetching.value" class="text-[12px] text-fg-subtle">
+              Считаем курс…
+            </p>
+          </div>
 
           <div class="grid grid-cols-1 gap-4">
             <Field label="Дата и время" :error="errors.occurredAt" required>
