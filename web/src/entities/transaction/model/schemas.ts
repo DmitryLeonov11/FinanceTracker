@@ -58,6 +58,7 @@ export const RecordTransferCommandSchema = z.object({
   sourceAccountId: z.string().uuid('Выберите счёт-источник'),
   destinationAccountId: z.string().uuid('Выберите счёт-получатель'),
   amount: z.number().positive('Сумма должна быть больше 0'),
+  destinationAmount: z.number().positive('Сумма зачисления должна быть больше 0').nullable().optional(),
   occurredAt: z.string(),
   note: z.string().max(500, 'Не более 500 символов').nullable().optional()
 }).refine((v) => v.sourceAccountId !== v.destinationAccountId, {
@@ -74,6 +75,9 @@ export const TransferResultSchema = z.object({
   destinationAccountId: z.string().uuid(),
   amount: z.number(),
   currency: CurrencySchema,
+  destinationAmount: z.number(),
+  destinationCurrency: CurrencySchema,
+  appliedRate: z.number().nullable(),
   occurredAt: z.string(),
   note: z.string().nullable()
 })

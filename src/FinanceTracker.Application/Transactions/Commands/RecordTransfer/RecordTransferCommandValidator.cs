@@ -14,5 +14,11 @@ public sealed class RecordTransferCommandValidator : AbstractValidator<RecordTra
         RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Сумма должна быть положительной.");
         RuleFor(x => x.OccurredAt).NotEmpty().WithMessage("Дата перевода обязательна.");
         RuleFor(x => x.Note).MaximumLength(500).WithMessage("Комментарий не должен превышать 500 символов.");
+        When(x => x.DestinationAmount.HasValue, () =>
+        {
+            RuleFor(x => x.DestinationAmount!.Value)
+                .GreaterThan(0)
+                .WithMessage("Сумма зачисления должна быть положительной.");
+        });
     }
 }

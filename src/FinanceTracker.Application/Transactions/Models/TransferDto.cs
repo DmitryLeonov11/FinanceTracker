@@ -8,5 +8,8 @@ public sealed record TransferDto(
     Guid DestinationAccountId,
     decimal Amount,
     string Currency,
+    decimal DestinationAmount,
+    string DestinationCurrency,
+    decimal? AppliedRate,
     DateTimeOffset OccurredAt,
     string? Note);

@@ -18,6 +18,8 @@ export type AccountBalance = z.infer<typeof AccountBalanceSchema>
 
 export const DashboardBalanceSchema = z.object({
   displayCurrency: CurrencySchema,
+  grandTotal: z.number(),
+  grandTotalIsApproximate: z.boolean(),
   balancesByCurrency: z.array(CurrencyBalanceSchema),
   accounts: z.array(AccountBalanceSchema)
 })
