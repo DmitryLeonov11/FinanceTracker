@@ -1,5 +1,6 @@
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Domain.Accounts;
+using FinanceTracker.Domain.Budgets;
 using FinanceTracker.Domain.Categories;
 using FinanceTracker.Domain.Fx;
 using FinanceTracker.Domain.Transactions;
@@ -18,6 +19,7 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxRate> FxRates => Set<FxRate>();
+    public DbSet<Budget> Budgets => Set<Budget>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
