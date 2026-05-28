@@ -36,7 +36,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/budgets',
     name: 'budgets',
-    component: () => import('@/pages/PlaceholderPage.vue'),
+    component: () => import('@/pages/BudgetsPage.vue'),
     meta: { layout: 'app', auth: true, title: 'Бюджеты' }
   },
   {

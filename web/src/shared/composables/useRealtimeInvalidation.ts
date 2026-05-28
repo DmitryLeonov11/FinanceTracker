@@ -28,6 +28,13 @@ export function useRealtimeInvalidation() {
           qc.invalidateQueries({ queryKey: ['dashboard'] })
           qc.invalidateQueries({ queryKey: ['transactions'] })
           qc.invalidateQueries({ queryKey: ['accounts'] })
+          qc.invalidateQueries({ queryKey: ['budgets'] })
+          break
+        case 'budget.created':
+        case 'budget.updated':
+        case 'budget.closed':
+        case 'BudgetThresholdReachedEvent':
+          qc.invalidateQueries({ queryKey: ['budgets'] })
           break
       }
     })
