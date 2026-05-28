@@ -19,6 +19,7 @@ export const useUiStore = defineStore('ui', () => {
   const createAccountOpen = ref(false)
   const recordTransactionOpen = ref(false)
   const recordTransferOpen = ref(false)
+  const createBudgetOpen = ref(false)
   const editingTransaction = ref<Transaction | null>(null)
   const deletingTransaction = ref<Transaction | null>(null)
 
@@ -69,6 +70,15 @@ export const useUiStore = defineStore('ui', () => {
     recordTransferOpen.value = false
   }
 
+  function openCreateBudget() {
+    commandPaletteOpen.value = false
+    createBudgetOpen.value = true
+  }
+
+  function closeCreateBudget() {
+    createBudgetOpen.value = false
+  }
+
   function openEditTransaction(tx: Transaction) {
     commandPaletteOpen.value = false
     editingTransaction.value = tx
@@ -101,6 +111,7 @@ export const useUiStore = defineStore('ui', () => {
     createAccountOpen,
     recordTransactionOpen,
     recordTransferOpen,
+    createBudgetOpen,
     editingTransaction,
     deletingTransaction,
     setTheme,
@@ -110,6 +121,8 @@ export const useUiStore = defineStore('ui', () => {
     openRecordTransaction,
     openRecordTransfer,
     closeRecordTransfer,
+    openCreateBudget,
+    closeCreateBudget,
     openEditTransaction,
     closeEditTransaction,
     confirmDeleteTransaction,

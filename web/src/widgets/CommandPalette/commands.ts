@@ -31,6 +31,14 @@ export const commandSections: CommandSection[] = [
         run: ({ ui }) => ui.openCreateAccount()
       },
       {
+        id: 'create-budget',
+        title: 'Создать бюджет',
+        hint: 'Лимит расходов на период',
+        icon: 'pieChart',
+        keywords: ['budget', 'бюджет', 'лимит', 'plan', 'new'],
+        run: ({ ui }) => ui.openCreateBudget()
+      },
+      {
         id: 'cycle-theme',
         title: 'Переключить тему',
         hint: 'Light · Dark · System',

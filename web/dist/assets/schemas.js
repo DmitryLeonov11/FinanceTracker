@@ -1,0 +1,1 @@
+import{ct as e,dt as t,lt as n,st as r,tt as i,ut as a}from"./index.js";var o=e([`Cash`,`Bank`,`Card`,`Crypto`,`Other`]),s=a({id:t().uuid(),name:t(),type:o,currency:i,balance:n(),isArchived:r(),createdAt:t()}),c=a({name:t().min(1,`Название обязательно`).max(100),type:o,currency:i,initialBalance:n().min(0,`Не может быть отрицательным`)});export{c as n,s as t};

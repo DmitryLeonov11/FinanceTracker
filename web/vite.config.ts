@@ -49,6 +49,15 @@ export default defineConfig({
       '/hubs': { target: 'http://localhost:5050', changeOrigin: true, ws: true }
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]'
+      }
+    }
+  },
   test: {
     environment: 'jsdom',
     globals: true,

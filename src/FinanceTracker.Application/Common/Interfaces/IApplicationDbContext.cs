@@ -1,4 +1,5 @@
 using FinanceTracker.Domain.Accounts;
+using FinanceTracker.Domain.Budgets;
 using FinanceTracker.Domain.Categories;
 using FinanceTracker.Domain.Fx;
 using FinanceTracker.Domain.Transactions;
@@ -15,6 +16,7 @@ public interface IApplicationDbContext
     DbSet<Category> Categories { get; }
     DbSet<Transaction> Transactions { get; }
     DbSet<FxRate> FxRates { get; }
+    DbSet<Budget> Budgets { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
