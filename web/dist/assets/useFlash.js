@@ -1,0 +1,1 @@
+import{Ht as e,Zt as t,ln as n}from"./index.js";function r(r,i={}){let{duration:a=700,threshold:o=.005}=i,s=n(null),c=null,l=r.value;return t(r,e=>{let t=e-l;l=e,!(Math.abs(t)<o)&&(s.value=t>0?`up`:`down`,c&&clearTimeout(c),c=setTimeout(()=>{s.value=null,c=null},a))}),e(()=>{c&&clearTimeout(c)}),s}export{r as t};

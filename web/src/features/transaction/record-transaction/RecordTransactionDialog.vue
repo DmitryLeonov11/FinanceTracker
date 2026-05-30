@@ -92,7 +92,10 @@ watch(
       Object.assign(form, formFromTransaction(editing.value))
     } else {
       Object.assign(form, defaultForm())
-      if (accountsData.value?.length) form.accountId = accountsData.value[0]!.id
+      const prefillId = ui.recordTransactionPrefillAccountId
+      const hasPrefillAccount = prefillId && accountsData.value?.some((a) => a.id === prefillId)
+      if (hasPrefillAccount) form.accountId = prefillId!
+      else if (accountsData.value?.length) form.accountId = accountsData.value[0]!.id
     }
   },
   { immediate: true }
@@ -109,7 +112,7 @@ watch(
 
 function closeDialog() {
   if (isEditMode.value) ui.closeEditTransaction()
-  else ui.recordTransactionOpen = false
+  else ui.closeRecordTransaction()
 }
 
 async function onSubmit(e: Event) {

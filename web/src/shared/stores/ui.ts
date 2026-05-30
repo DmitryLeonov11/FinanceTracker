@@ -15,6 +15,7 @@ export const useUiStore = defineStore('ui', () => {
     themeMode.value === 'dark' || (themeMode.value === 'system' && prefersDark.value)
   )
 
+  const mobileSidebarOpen = ref(false)
   const commandPaletteOpen = ref(false)
   const createAccountOpen = ref(false)
   const recordTransactionOpen = ref(false)
@@ -22,6 +23,9 @@ export const useUiStore = defineStore('ui', () => {
   const createBudgetOpen = ref(false)
   const editingTransaction = ref<Transaction | null>(null)
   const deletingTransaction = ref<Transaction | null>(null)
+  const renamingAccountId = ref<string | null>(null)
+  const recordTransactionPrefillAccountId = ref<string | null>(null)
+  const recordTransferPrefillSourceId = ref<string | null>(null)
 
   watch(
     isDark,
@@ -47,6 +51,14 @@ export const useUiStore = defineStore('ui', () => {
     sidebarCollapsed.value = !sidebarCollapsed.value
   }
 
+  function toggleMobileSidebar() {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value
+  }
+
+  function closeMobileSidebar() {
+    mobileSidebarOpen.value = false
+  }
+
   function toggleCommandPalette() {
     commandPaletteOpen.value = !commandPaletteOpen.value
   }
@@ -56,18 +68,35 @@ export const useUiStore = defineStore('ui', () => {
     createAccountOpen.value = true
   }
 
-  function openRecordTransaction() {
+  function openRecordTransaction(prefillAccountId?: string) {
     commandPaletteOpen.value = false
+    recordTransactionPrefillAccountId.value = prefillAccountId ?? null
     recordTransactionOpen.value = true
   }
 
-  function openRecordTransfer() {
+  function closeRecordTransaction() {
+    recordTransactionOpen.value = false
+    recordTransactionPrefillAccountId.value = null
+  }
+
+  function openRecordTransfer(prefillSourceId?: string) {
     commandPaletteOpen.value = false
+    recordTransferPrefillSourceId.value = prefillSourceId ?? null
     recordTransferOpen.value = true
   }
 
   function closeRecordTransfer() {
     recordTransferOpen.value = false
+    recordTransferPrefillSourceId.value = null
+  }
+
+  function openRenameAccount(id: string) {
+    commandPaletteOpen.value = false
+    renamingAccountId.value = id
+  }
+
+  function closeRenameAccount() {
+    renamingAccountId.value = null
   }
 
   function openCreateBudget() {
@@ -106,6 +135,7 @@ export const useUiStore = defineStore('ui', () => {
     themeMode,
     isDark,
     sidebarCollapsed,
+    mobileSidebarOpen,
     density,
     commandPaletteOpen,
     createAccountOpen,
@@ -114,15 +144,23 @@ export const useUiStore = defineStore('ui', () => {
     createBudgetOpen,
     editingTransaction,
     deletingTransaction,
+    renamingAccountId,
+    recordTransactionPrefillAccountId,
+    recordTransferPrefillSourceId,
     setTheme,
     toggleSidebar,
+    toggleMobileSidebar,
+    closeMobileSidebar,
     toggleCommandPalette,
     openCreateAccount,
     openRecordTransaction,
+    closeRecordTransaction,
     openRecordTransfer,
     closeRecordTransfer,
     openCreateBudget,
     closeCreateBudget,
+    openRenameAccount,
+    closeRenameAccount,
     openEditTransaction,
     closeEditTransaction,
     confirmDeleteTransaction,

@@ -31,18 +31,31 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore src/FinanceTracker.Api/FinanceTracker.Api.csproj
+        run: dotnet restore FinanceTracker.slnx
 
       - name: Build
         run: >-
-          dotnet build src/FinanceTracker.Api/FinanceTracker.Api.csproj
+          dotnet build FinanceTracker.slnx
           --no-restore
           --configuration Release
           /p:TreatWarningsAsErrors=true
 
-      # Включить когда появятся тесты:
-      # - name: Test
-      #   run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Test
+        run: >-
+          dotnet test FinanceTracker.slnx
+          --no-build
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx"
+          --results-directory test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: test-results/**/*.trx
+          retention-days: 7
 
   frontend:
     name: Frontend · typecheck + build

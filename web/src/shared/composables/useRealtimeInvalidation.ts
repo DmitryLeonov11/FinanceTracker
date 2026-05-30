@@ -20,6 +20,8 @@ export function useRealtimeInvalidation() {
         case 'BalanceChangedEvent':
         case 'account.created':
         case 'account.balance-changed':
+        case 'account.renamed':
+        case 'account.archived':
           qc.invalidateQueries({ queryKey: ['dashboard'] })
           qc.invalidateQueries({ queryKey: ['accounts'] })
           break

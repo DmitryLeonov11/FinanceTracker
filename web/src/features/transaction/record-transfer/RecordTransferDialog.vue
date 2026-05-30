@@ -116,7 +116,10 @@ watch(
       Object.keys(errors).forEach((k) => delete errors[k])
       debouncedAmount.value = 0
       const list = accountsData.value ?? []
-      if (list.length >= 1) form.sourceAccountId = list[0]!.id
+      const prefillId = ui.recordTransferPrefillSourceId
+      const hasPrefill = prefillId && list.some((a) => a.id === prefillId)
+      if (hasPrefill) form.sourceAccountId = prefillId!
+      else if (list.length >= 1) form.sourceAccountId = list[0]!.id
     }
   }
 )
