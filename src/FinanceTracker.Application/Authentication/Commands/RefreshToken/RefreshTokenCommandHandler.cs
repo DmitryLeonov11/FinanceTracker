@@ -34,7 +34,8 @@ public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCom
             ?? throw new ForbiddenAccessException("Пользователь не найден.");
 
         var newRefresh = _jwt.IssueRefreshToken();
-        user.RotateRefreshToken(token.Id, newRefresh.Hash, newRefresh.ExpiresAt);
+        var newToken = user.RotateRefreshToken(token.Id, newRefresh.Hash, newRefresh.ExpiresAt);
+        _db.RefreshTokens.Add(newToken);
 
         var access = _jwt.IssueAccessToken(user);
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import Icon from '@/shared/ui/icons/Icon.vue'
 import type { IconName } from '@/shared/ui/icons/paths'
 import ConnectionIndicator from '@/shared/ui/nav/ConnectionIndicator.vue'
@@ -60,17 +60,30 @@ async function handleLogout() {
   auth.logout()
   await router.push('/login')
 }
+
+watch(() => route.fullPath, () => ui.closeMobileSidebar())
 </script>
 
 <template>
   <div class="min-h-dvh flex bg-bg">
-    <!-- Sidebar (desktop) -->
+    <!-- Mobile backdrop -->
+    <div
+      v-if="ui.mobileSidebarOpen"
+      class="md:hidden fixed inset-0 z-40 bg-bg/60 backdrop-blur-sm"
+      @click="ui.closeMobileSidebar"
+    />
+
+    <!-- Sidebar (desktop static / mobile drawer) -->
     <aside
       :class="
         cn(
-          'hidden md:flex flex-col border-r border-border bg-surface',
-          'transition-[width] duration-200',
-          ui.sidebarCollapsed ? 'w-[72px]' : 'w-[240px]'
+          'flex flex-col border-r border-border bg-surface',
+          'transition-[width,transform] duration-200',
+          // mobile: fixed drawer, slide from left
+          'fixed inset-y-0 left-0 z-50 w-[260px] md:static md:z-auto md:w-auto',
+          ui.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          // desktop width
+          ui.sidebarCollapsed ? 'md:w-[72px]' : 'md:w-[240px]'
         )
       "
     >
@@ -129,9 +142,10 @@ async function handleLogout() {
       >
         <button
           class="md:hidden inline-flex items-center justify-center size-9 -ml-1 rounded-md text-fg-muted hover:text-fg hover:bg-surface-hi"
-          @click="ui.toggleSidebar"
+          @click="ui.toggleMobileSidebar"
+          :aria-label="ui.mobileSidebarOpen ? 'Закрыть меню' : 'Открыть меню'"
         >
-          <Icon name="menu" :size="20" />
+          <Icon :name="ui.mobileSidebarOpen ? 'x' : 'menu'" :size="20" />
         </button>
         <h1 class="text-[15px] font-semibold tracking-[-0.005em]">{{ route.meta.title }}</h1>
         <div class="ml-auto flex items-center gap-1">

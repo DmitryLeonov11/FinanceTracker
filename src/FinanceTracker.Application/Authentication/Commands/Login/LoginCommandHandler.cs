@@ -42,7 +42,8 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
 
         var access = _jwt.IssueAccessToken(user);
         var refresh = _jwt.IssueRefreshToken();
-        user.IssueRefreshToken(refresh.Hash, refresh.ExpiresAt);
+        var token = user.IssueRefreshToken(refresh.Hash, refresh.ExpiresAt);
+        _db.RefreshTokens.Add(token);
 
         await _db.SaveChangesAsync(cancellationToken);
 

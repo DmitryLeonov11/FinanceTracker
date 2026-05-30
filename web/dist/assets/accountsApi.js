@@ -1,0 +1,1 @@
+import{et as e}from"./index.js";import{t}from"./schemas.js";var n={async create(n){let{data:r}=await e.post(`/accounts`,n);return t.parse(r)},async getById(n){let{data:r}=await e.get(`/accounts/${n}`);return t.parse(r)},async rename(n,r){let{data:i}=await e.patch(`/accounts/${n}`,{name:r});return t.parse(i)},async archive(t){await e.delete(`/accounts/${t}`)}};export{n as t};

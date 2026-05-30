@@ -99,7 +99,7 @@ const groupedByDay = computed<DayGroup[]>(() => {
         class="overflow-hidden"
       >
         <div
-          class="sticky top-14 z-10 px-4 h-10 flex items-center justify-between bg-surface-hi/95 backdrop-blur border-b border-border"
+          class="px-4 h-10 flex items-center justify-between bg-surface-hi border-b border-border"
         >
           <span class="text-[12px] font-semibold uppercase tracking-wider text-fg-muted">
             {{ group.label }}

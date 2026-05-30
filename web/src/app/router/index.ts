@@ -28,6 +28,12 @@ const routes: RouteRecordRaw[] = [
     meta: { layout: 'app', auth: true, title: 'Счета' }
   },
   {
+    path: '/accounts/:id',
+    name: 'account-detail',
+    component: () => import('@/pages/AccountDetailPage.vue'),
+    meta: { layout: 'app', auth: true, title: 'Счёт' }
+  },
+  {
     path: '/transactions',
     name: 'transactions',
     component: () => import('@/pages/TransactionsPage.vue'),
