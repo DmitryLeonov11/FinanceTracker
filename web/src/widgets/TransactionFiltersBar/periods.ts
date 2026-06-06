@@ -13,7 +13,9 @@ const startOfDay = (d: Date) => {
 
 export function rangeForPreset(preset: PeriodPreset): DateRange {
   const now = new Date()
-  const to = now.toISOString()
+  const toDate = new Date(now)
+  toDate.setHours(23, 59, 59, 999)
+  const to = toDate.toISOString()
   const from = new Date(now)
   switch (preset) {
     case 'week':

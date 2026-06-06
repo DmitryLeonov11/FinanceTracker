@@ -17,7 +17,7 @@ export const commandSections: CommandSection[] = [
       {
         id: 'record-transfer',
         title: 'Перевод между счетами',
-        hint: 'Между двумя счетами в одной валюте',
+        hint: 'В том числе мультивалютные',
         icon: 'swap',
         keywords: ['transfer', 'перевод', 'между', 'счетами'],
         run: ({ ui }) => ui.openRecordTransfer()
@@ -100,24 +100,7 @@ export const commandSections: CommandSection[] = [
           router.push(routes.budgets())
         }
       },
-      {
-        id: 'nav-goals',
-        title: 'Цели',
-        icon: 'target',
-        keywords: ['goals', 'goals', 'накопления'],
-        run: ({ router }) => {
-          router.push(routes.goals())
-        }
-      },
-      {
-        id: 'nav-analytics',
-        title: 'Аналитика',
-        icon: 'barChart',
-        keywords: ['analytics', 'отчёты', 'статистика'],
-        run: ({ router }) => {
-          router.push(routes.analytics())
-        }
-      },
+
       {
         id: 'nav-settings',
         title: 'Настройки',
