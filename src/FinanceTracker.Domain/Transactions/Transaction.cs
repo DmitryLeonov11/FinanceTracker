@@ -16,6 +16,7 @@ public sealed class Transaction : AggregateRoot
     public DateTimeOffset OccurredAt { get; private set; }
     public string? Note { get; private set; }
     public Guid? TransferGroupId { get; private set; }
+    public bool IsOutgoing { get; private set; }
     public bool IsDeleted { get; private set; }
 
     private Transaction() { }
@@ -30,7 +31,8 @@ public sealed class Transaction : AggregateRoot
         Money amount,
         DateTimeOffset occurredAt,
         string? note,
-        Guid? transferGroupId)
+        Guid? transferGroupId,
+        bool isOutgoing)
         : base(id)
     {
         UserId = userId;
@@ -42,6 +44,7 @@ public sealed class Transaction : AggregateRoot
         OccurredAt = occurredAt;
         Note = note;
         TransferGroupId = transferGroupId;
+        IsOutgoing = isOutgoing;
         CreatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -54,7 +57,7 @@ public sealed class Transaction : AggregateRoot
         string? note)
     {
         ValidatePositive(amount);
-        var tx = new Transaction(Guid.NewGuid(), userId, accountId, null, categoryId, TransactionType.Income, amount, occurredAt, NormalizeNote(note), transferGroupId: null);
+        var tx = new Transaction(Guid.NewGuid(), userId, accountId, null, categoryId, TransactionType.Income, amount, occurredAt, NormalizeNote(note), transferGroupId: null, isOutgoing: false);
         tx.Raise(new TransactionRecordedEvent(tx.Id, userId, accountId, TransactionType.Income, amount.Amount, amount.Currency.Code, occurredAt));
         return tx;
     }
@@ -68,7 +71,7 @@ public sealed class Transaction : AggregateRoot
         string? note)
     {
         ValidatePositive(amount);
-        var tx = new Transaction(Guid.NewGuid(), userId, accountId, null, categoryId, TransactionType.Expense, amount, occurredAt, NormalizeNote(note), transferGroupId: null);
+        var tx = new Transaction(Guid.NewGuid(), userId, accountId, null, categoryId, TransactionType.Expense, amount, occurredAt, NormalizeNote(note), transferGroupId: null, isOutgoing: true);
         tx.Raise(new TransactionRecordedEvent(tx.Id, userId, accountId, TransactionType.Expense, amount.Amount, amount.Currency.Code, occurredAt));
         return tx;
     }
@@ -92,10 +95,10 @@ public sealed class Transaction : AggregateRoot
 
         var outgoing = new Transaction(
             Guid.NewGuid(), userId, sourceAccountId, destinationAccountId, null,
-            TransactionType.Transfer, sourceAmount, occurredAt, noteNormalized, groupId);
+            TransactionType.Transfer, sourceAmount, occurredAt, noteNormalized, groupId, isOutgoing: true);
         var incoming = new Transaction(
             Guid.NewGuid(), userId, destinationAccountId, sourceAccountId, null,
-            TransactionType.Transfer, destinationAmount, occurredAt, noteNormalized, groupId);
+            TransactionType.Transfer, destinationAmount, occurredAt, noteNormalized, groupId, isOutgoing: false);
 
         outgoing.Raise(new TransactionRecordedEvent(outgoing.Id, userId, sourceAccountId, TransactionType.Transfer, sourceAmount.Amount, sourceAmount.Currency.Code, occurredAt));
         incoming.Raise(new TransactionRecordedEvent(incoming.Id, userId, destinationAccountId, TransactionType.Transfer, destinationAmount.Amount, destinationAmount.Currency.Code, occurredAt));

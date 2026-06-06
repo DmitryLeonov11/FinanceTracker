@@ -2,6 +2,7 @@ using FinanceTracker.Application.Common.Exceptions;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Application.Dashboard.Models;
 using FinanceTracker.Domain.Transactions;
+using FinanceTracker.Domain.ValueObjects;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +44,7 @@ public sealed class GetCashflowQueryHandler : IRequestHandler<GetCashflowQuery, 
             .AsNoTracking()
             .Where(t => t.UserId == userId)
             .Where(t => t.Type == TransactionType.Income || t.Type == TransactionType.Expense)
-            .Where(t => t.Amount.Currency.Code == currency)
+            .Where(t => t.Amount.Currency == Currency.Of(currency))
             .Where(t => t.OccurredAt >= from && t.OccurredAt <= to)
             .GroupBy(t => new { Date = t.OccurredAt.UtcDateTime.Date, t.Type })
             .Select(g => new
