@@ -2,6 +2,7 @@ using FinanceTracker.Application.Budgets.Helpers;
 using FinanceTracker.Application.Budgets.Models;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Domain.Transactions;
+using FinanceTracker.Domain.ValueObjects;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,7 @@ public sealed class GetBudgetsQueryHandler : IRequestHandler<GetBudgetsQuery, IR
                 .AsNoTracking()
                 .Where(t => t.UserId == userId)
                 .Where(t => t.Type == TransactionType.Expense)
-                .Where(t => t.Amount.Currency.Code == currencyCode)
+                .Where(t => t.Amount.Currency == Currency.Of(currencyCode))
                 .Where(t => t.OccurredAt >= from && t.OccurredAt <= to)
                 .Where(t => budget.CategoryId == null || t.CategoryId == budget.CategoryId)
                 .SumAsync(t => (decimal?)t.Amount.Amount, cancellationToken) ?? 0m;

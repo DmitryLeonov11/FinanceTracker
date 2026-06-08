@@ -33,11 +33,53 @@ public sealed class DeleteTransactionCommandHandler : IRequestHandler<DeleteTran
 
         if (transaction.Type == TransactionType.Transfer)
         {
-            // v1 limitation: удаление переводов требует явного флага направления (IsOutgoing) на ноге,
-            // которого пока в схеме нет. Чтобы откатить баланс корректно для обеих сторон, нужно знать
-            // какая нога была debit, какая credit. Введение колонки откладываем до отдельной миграции.
-            throw new DomainException(
-                "Удаление переводов появится позже. Сейчас можно создать обратный перевод вручную.");
+            if (transaction.TransferGroupId == null)
+                throw new DomainException("Для перевода отсутствует TransferGroupId.");
+
+            var groupId = transaction.TransferGroupId.Value;
+            var transfers = await _db.Transactions
+                .Where(t => t.TransferGroupId == groupId && t.UserId == userId)
+                .ToListAsync(cancellationToken);
+
+            var outgoing = transfers.SingleOrDefault(t => t.IsOutgoing);
+            var incoming = transfers.SingleOrDefault(t => !t.IsOutgoing);
+
+            if (outgoing != null)
+            {
+                var sourceAccount = await _db.Accounts
+                    .SingleOrDefaultAsync(a => a.Id == outgoing.AccountId && a.UserId == userId, cancellationToken);
+                if (sourceAccount != null)
+                {
+                    sourceAccount.Apply(outgoing.Amount);
+                    await _notifier.NotifyUserAsync(
+                        userId,
+                        "account.balance-changed",
+                        new { AccountId = sourceAccount.Id, Balance = sourceAccount.Balance.Amount, Currency = sourceAccount.Currency.Code },
+                        cancellationToken);
+                }
+                outgoing.SoftDelete();
+                await _notifier.NotifyUserAsync(userId, "transaction.deleted", new { Id = outgoing.Id }, cancellationToken);
+            }
+
+            if (incoming != null)
+            {
+                var destAccount = await _db.Accounts
+                    .SingleOrDefaultAsync(a => a.Id == incoming.AccountId && a.UserId == userId, cancellationToken);
+                if (destAccount != null)
+                {
+                    destAccount.Apply(incoming.Amount.Negate());
+                    await _notifier.NotifyUserAsync(
+                        userId,
+                        "account.balance-changed",
+                        new { AccountId = destAccount.Id, Balance = destAccount.Balance.Amount, Currency = destAccount.Currency.Code },
+                        cancellationToken);
+                }
+                incoming.SoftDelete();
+                await _notifier.NotifyUserAsync(userId, "transaction.deleted", new { Id = incoming.Id }, cancellationToken);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return;
         }
 
         var account = await _db.Accounts

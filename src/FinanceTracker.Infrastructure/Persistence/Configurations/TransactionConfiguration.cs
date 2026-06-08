@@ -22,6 +22,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(t => t.OccurredAt).HasColumnName("occurred_at").IsRequired();
         builder.Property(t => t.Note).HasColumnName("note").HasMaxLength(500);
         builder.Property(t => t.TransferGroupId).HasColumnName("transfer_group_id");
+        builder.Property(t => t.IsOutgoing).HasColumnName("is_outgoing").IsRequired();
         builder.Property(t => t.IsDeleted).HasColumnName("is_deleted").IsRequired();
         builder.Property(t => t.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(t => t.UpdatedAt).HasColumnName("updated_at");
