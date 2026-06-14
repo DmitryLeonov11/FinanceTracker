@@ -12,9 +12,12 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend · build
+    name: Backend · build & test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v6
 
@@ -48,14 +51,26 @@ jobs:
           --logger "console;verbosity=normal"
           --logger "trx"
           --results-directory test-results
+          --collect:"XPlat Code Coverage"
 
-      - name: Upload test results
+      - name: Render test report
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: .NET tests
+          path: test-results/**/*.trx
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-results
-          path: test-results/**/*.trx
-          retention-days: 7
+          path: |
+            test-results/**/*.trx
+            test-results/**/coverage.cobertura.xml
+          retention-days: 14
 
   frontend:
     name: Frontend · typecheck + build
@@ -92,6 +107,34 @@ jobs:
           path: web/dist
           retention-days: 7
 
+  docs:
+    name: Docs · markdownlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint markdown
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: |
+            README.md
+            ROADMAP.md
+            .github/**/*.md
+          config: .markdownlint.json
+
+  workflows:
+    name: Workflows · actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint workflows
+        uses: raven-actions/actionlint@v2
+        with:
+          files: .github/workflows/*.yml
+
   docker:
     name: Docker · build images
     runs-on: ubuntu-latest
@@ -126,3 +169,36 @@ jobs:
           tags: financetracker-${{ matrix.name }}:ci
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+  summary:
+    name: CI · summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [backend, frontend, docs, workflows, docker]
+    steps:
+      - name: Aggregate
+        run: |
+          BACKEND="${{ needs.backend.result }}"
+          FRONTEND="${{ needs.frontend.result }}"
+          DOCS="${{ needs.docs.result }}"
+          WORKFLOWS="${{ needs.workflows.result }}"
+          DOCKER="${{ needs.docker.result }}"
+          {
+            echo "## CI summary"
+            echo ""
+            echo "| Job | Result |"
+            echo "|---|---|"
+            echo "| Backend  | $BACKEND |"
+            echo "| Frontend | $FRONTEND |"
+            echo "| Docs     | $DOCS |"
+            echo "| Workflows| $WORKFLOWS |"
+            echo "| Docker   | $DOCKER |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          fail=0
+          for r in "$BACKEND" "$FRONTEND" "$DOCS" "$WORKFLOWS" "$DOCKER"; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then
+              fail=1
+            fi
+          done
+          exit $fail

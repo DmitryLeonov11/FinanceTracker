@@ -18,6 +18,7 @@ export const transactionsApi = {
     if (filters.from) params.set('from', filters.from)
     if (filters.to) params.set('to', filters.to)
     for (const id of filters.accountIds ?? []) params.append('accountId', id)
+    for (const id of filters.categoryIds ?? []) params.append('categoryId', id)
     for (const t of filters.types ?? []) params.append('type', t)
     if (filters.search) params.set('search', filters.search)
     params.set('page', String(filters.page))
