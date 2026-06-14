@@ -21,12 +21,13 @@ const PAGE_SIZE = 50
 
 const period = ref<PeriodPreset>('month')
 const accountIds = ref<string[]>([])
+const categoryIds = ref<string[]>([])
 const types = ref<TransactionType[]>([])
 const search = ref('')
 const page = ref(1)
 
 // reset page when any other filter changes
-watch([period, accountIds, types, search], () => {
+watch([period, accountIds, categoryIds, types, search], () => {
   page.value = 1
 })
 
@@ -45,6 +46,7 @@ const filters = computed<TransactionFilters>(() => {
     from,
     to,
     accountIds: accountIds.value.length ? accountIds.value : undefined,
+    categoryIds: categoryIds.value.length ? categoryIds.value : undefined,
     types: types.value.length ? types.value : undefined,
     search: debouncedSearch.value.trim() || undefined,
     page: page.value,
@@ -91,10 +93,12 @@ watch(
     <TransactionFiltersBar
       :period="period"
       :account-ids="accountIds"
+      :category-ids="categoryIds"
       :types="types"
       :search="search"
       @update:period="(v) => (period = v)"
       @update:account-ids="(v) => (accountIds = v)"
+      @update:category-ids="(v) => (categoryIds = v)"
       @update:types="(v) => (types = v)"
       @update:search="(v) => (search = v)"
     />

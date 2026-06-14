@@ -3,12 +3,14 @@ import { computed } from 'vue'
 import { cn } from '@/shared/lib/cn'
 import { Input } from '@/shared/ui/primitives'
 import { useAccounts } from '@/entities/account/api/useAccounts'
+import { useCategories } from '@/entities/category/api/useCategories'
 import type { TransactionType } from '@/entities/transaction/model/schemas'
 import { PERIOD_LABELS, PERIOD_ORDER, type PeriodPreset } from './periods'
 
 interface Props {
   period: PeriodPreset
   accountIds: string[]
+  categoryIds: string[]
   types: TransactionType[]
   search: string
 }
@@ -17,11 +19,13 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:period': [v: PeriodPreset]
   'update:accountIds': [v: string[]]
+  'update:categoryIds': [v: string[]]
   'update:types': [v: TransactionType[]]
   'update:search': [v: string]
 }>()
 
 const { data: accountsData } = useAccounts()
+const { data: categoriesData } = useCategories()
 
 const allAccountIds = computed(() => accountsData.value?.map((a) => a.id) ?? [])
 const selectedAccountSet = computed(() => new Set(props.accountIds))
@@ -51,6 +55,24 @@ function toggleType(t: TransactionType) {
   if (set.has(t)) set.delete(t)
   else set.add(t)
   emit('update:types', [...set])
+}
+
+const selectedCategorySet = computed(() => new Set(props.categoryIds))
+const categoriesAllSelected = computed(() => props.categoryIds.length === 0)
+const sortedCategories = computed(() => {
+  const list = categoriesData.value ?? []
+  return [...list].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+})
+
+function toggleCategory(id: string) {
+  const set = new Set(props.categoryIds)
+  if (set.has(id)) set.delete(id)
+  else set.add(id)
+  emit('update:categoryIds', [...set])
+}
+
+function resetCategories() {
+  emit('update:categoryIds', [])
 }
 </script>
 
@@ -140,6 +162,48 @@ function toggleType(t: TransactionType) {
       >
         {{ acc.name }}
         <span class="text-[10px] text-fg-subtle uppercase tracking-wider">{{ acc.currency }}</span>
+      </button>
+    </div>
+
+    <!-- Category chips -->
+    <div v-if="sortedCategories.length" class="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        :class="
+          cn(
+            'h-7 px-2.5 rounded-pill border text-[12px] font-medium transition-colors',
+            categoriesAllSelected
+              ? 'border-fg-subtle bg-fg text-fg-inverse'
+              : 'border-border text-fg-muted hover:text-fg'
+          )
+        "
+        @click="resetCategories"
+      >
+        Все категории
+      </button>
+      <button
+        v-for="cat in sortedCategories"
+        :key="cat.id"
+        type="button"
+        :class="
+          cn(
+            'h-7 px-2.5 rounded-pill border text-[12px] transition-colors flex items-center gap-1.5',
+            selectedCategorySet.has(cat.id)
+              ? 'border-accent bg-accent-soft text-accent-soft-fg'
+              : 'border-border text-fg-muted hover:text-fg hover:border-border-strong'
+          )
+        "
+        @click="toggleCategory(cat.id)"
+      >
+        <span
+          v-if="cat.color"
+          class="size-2 rounded-full"
+          :style="{ background: cat.color }"
+        />
+        {{ cat.name }}
+        <span class="text-[10px] text-fg-subtle uppercase tracking-wider">
+          {{ cat.kind === 'Income' ? '+' : '−' }}
+        </span>
       </button>
     </div>
   </div>

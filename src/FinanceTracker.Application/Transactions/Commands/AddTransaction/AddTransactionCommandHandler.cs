@@ -1,3 +1,4 @@
+using FinanceTracker.Application.Budgets.Notifications;
 using FinanceTracker.Application.Common.Exceptions;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Application.Transactions.Models;
@@ -13,15 +14,18 @@ public sealed class AddTransactionCommandHandler : IRequestHandler<AddTransactio
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IRealtimeNotifier _notifier;
+    private readonly IPublisher _publisher;
 
     public AddTransactionCommandHandler(
         IApplicationDbContext db,
         ICurrentUser currentUser,
-        IRealtimeNotifier notifier)
+        IRealtimeNotifier notifier,
+        IPublisher publisher)
     {
         _db = db;
         _currentUser = currentUser;
         _notifier = notifier;
+        _publisher = publisher;
     }
 
     public async Task<TransactionDto> Handle(AddTransactionCommand request, CancellationToken cancellationToken)
@@ -66,6 +70,18 @@ public sealed class AddTransactionCommandHandler : IRequestHandler<AddTransactio
             "account.balance-changed",
             new { AccountId = account.Id, Balance = account.Balance.Amount, Currency = account.Currency.Code },
             cancellationToken);
+
+        if (request.Type == TransactionType.Expense)
+        {
+            await _publisher.Publish(
+                new ExpenseRecordedNotification(
+                    userId,
+                    request.CategoryId,
+                    account.Currency.Code,
+                    amount.Amount,
+                    request.OccurredAt),
+                cancellationToken);
+        }
 
         return new TransactionDto(
             transaction.Id,

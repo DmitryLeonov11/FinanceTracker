@@ -21,6 +21,7 @@ import {
   type BudgetPeriod
 } from '@/entities/budget/model/schemas'
 import { useCreateBudget } from '@/entities/budget/api/useCreateBudget'
+import CategorySelect from '@/entities/category/ui/CategorySelect.vue'
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from '@/shared/config/currencies'
 import { useUiStore } from '@/shared/stores/ui'
 import { ApiError } from '@/shared/api/errors'
@@ -37,6 +38,7 @@ interface FormState {
   limit: string
   startDate: string
   rollover: boolean
+  categoryId: string | null
 }
 
 function todayIso(): string {
@@ -50,7 +52,8 @@ function defaultForm(): FormState {
     currency: 'BYN',
     limit: '',
     startDate: todayIso(),
-    rollover: false
+    rollover: false,
+    categoryId: null
   }
 }
 
@@ -82,7 +85,7 @@ async function onSubmit(e: Event) {
     limit: Number.isFinite(limit) ? limit : 0,
     startDate: form.startDate,
     rollover: form.rollover,
-    categoryId: null
+    categoryId: form.categoryId
   }
 
   const parsed = CreateBudgetCommandSchema.safeParse(cmd)
@@ -218,6 +221,18 @@ async function onSubmit(e: Event) {
                 :invalid="invalid"
               />
             </template>
+          </Field>
+
+          <Field
+            label="Категория"
+            :error="errors.categoryId"
+            hint="Оставьте без категории, чтобы лимит покрывал все расходы выбранной валюты"
+          >
+            <CategorySelect
+              v-model="form.categoryId"
+              kind="Expense"
+              all-label="Все расходы"
+            />
           </Field>
         </form>
 

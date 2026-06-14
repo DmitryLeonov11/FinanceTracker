@@ -40,6 +40,7 @@ export interface TransactionFilters {
   from?: string
   to?: string
   accountIds?: string[]
+  categoryIds?: string[]
   types?: TransactionType[]
   search?: string
   page: number

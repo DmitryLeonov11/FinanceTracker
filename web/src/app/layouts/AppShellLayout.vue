@@ -11,8 +11,11 @@ import RecordTransferDialog from '@/features/transaction/record-transfer/RecordT
 import DeleteTransactionConfirm from '@/features/transaction/delete-transaction/DeleteTransactionConfirm.vue'
 import { useAuthStore } from '@/shared/stores/auth'
 import { useUiStore } from '@/shared/stores/ui'
+import { useBudgetThresholdToasts } from '@/shared/composables/useBudgetThresholdToasts'
 import { t } from '@/shared/lib/i18n'
 import { cn } from '@/shared/lib/cn'
+
+useBudgetThresholdToasts()
 
 interface NavItem {
   label: string
