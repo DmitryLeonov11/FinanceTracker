@@ -81,6 +81,16 @@ const tree = computed<Node[]>(() => {
 function select(id: string | null) {
   emit('update:modelValue', id)
 }
+
+function onCreateKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    void submitCreate()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    showCreateForm.value = false
+  }
+}
 </script>
 
 <template>
@@ -151,8 +161,7 @@ function select(id: string | null) {
             v-model="newName"
             placeholder="Например, Продукты"
             class="flex-1"
-            @keydown.enter.prevent="submitCreate"
-            @keydown.escape.prevent="showCreateForm = false"
+            @keydown="onCreateKeydown"
           />
           <Button
             type="button"
