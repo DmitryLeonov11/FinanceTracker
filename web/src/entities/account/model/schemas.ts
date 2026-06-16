@@ -15,6 +15,19 @@ export const AccountSchema = z.object({
 })
 export type Account = z.infer<typeof AccountSchema>
 
+export const BalancePointSchema = z.object({
+  date: z.string(),
+  balance: z.number()
+})
+export type BalancePoint = z.infer<typeof BalancePointSchema>
+
+export const AccountBalanceHistorySchema = z.object({
+  accountId: z.string().uuid(),
+  currency: CurrencySchema,
+  points: z.array(BalancePointSchema)
+})
+export type AccountBalanceHistory = z.infer<typeof AccountBalanceHistorySchema>
+
 export const CreateAccountCommandSchema = z.object({
   name: z.string().min(1, 'Название обязательно').max(100),
   type: AccountTypeSchema,

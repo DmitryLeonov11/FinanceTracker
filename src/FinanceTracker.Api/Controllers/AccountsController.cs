@@ -2,6 +2,7 @@ using FinanceTracker.Application.Accounts.Commands.ArchiveAccount;
 using FinanceTracker.Application.Accounts.Commands.CreateAccount;
 using FinanceTracker.Application.Accounts.Commands.RenameAccount;
 using FinanceTracker.Application.Accounts.Models;
+using FinanceTracker.Application.Accounts.Queries.GetAccountBalanceHistory;
 using FinanceTracker.Application.Accounts.Queries.GetAccountById;
 using FinanceTracker.Application.Accounts.Queries.GetAccounts;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,15 @@ public sealed class AccountsController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AccountDto>> GetById(Guid id, CancellationToken cancellationToken)
         => Ok(await Sender.Send(new GetAccountByIdQuery(id), cancellationToken));
+
+    [HttpGet("{id:guid}/balance-history")]
+    [ProducesResponseType(typeof(AccountBalanceHistoryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AccountBalanceHistoryDto>> GetBalanceHistory(
+        Guid id,
+        [FromQuery] int days = 30,
+        CancellationToken cancellationToken = default)
+        => Ok(await Sender.Send(new GetAccountBalanceHistoryQuery(id, days), cancellationToken));
 
     [HttpPost]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status201Created)]

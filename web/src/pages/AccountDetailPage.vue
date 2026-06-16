@@ -17,6 +17,7 @@ import { Card, Button, Skeleton, Badge } from '@/shared/ui/primitives'
 import Money from '@/entities/money/ui/Money.vue'
 import Icon from '@/shared/ui/icons/Icon.vue'
 import TransactionsTable from '@/widgets/TransactionsTable/TransactionsTable.vue'
+import AccountBalanceSparkline from '@/widgets/AccountBalanceSparkline/AccountBalanceSparkline.vue'
 import RenameAccountDialog from '@/features/account/rename-account/RenameAccountDialog.vue'
 
 import { useAccount } from '@/entities/account/api/useAccount'
@@ -168,6 +169,15 @@ function quickTransfer() {
         <div class="mt-2">
           <Money :amount="account.balance" :currency="account.currency" size="2xl" animate :duration="600" />
         </div>
+      </Card>
+
+      <!-- Balance history sparkline -->
+      <Card padding="md">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-[13px] font-medium text-fg-muted uppercase tracking-wider">Динамика баланса</h2>
+          <span class="text-[12px] text-fg-subtle">30 дней</span>
+        </div>
+        <AccountBalanceSparkline :account-id="account.id" :currency="account.currency" />
       </Card>
 
       <!-- Quick actions -->
