@@ -1,5 +1,6 @@
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Infrastructure.Common;
+using FinanceTracker.Infrastructure.Fx;
 using FinanceTracker.Infrastructure.Identity;
 using FinanceTracker.Infrastructure.Persistence;
 using FinanceTracker.Infrastructure.Persistence.Interceptors;
@@ -7,6 +8,7 @@ using FinanceTracker.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FinanceTracker.Infrastructure;
 
@@ -15,6 +17,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<FxRefreshSettings>(configuration.GetSection(FxRefreshSettings.SectionName));
 
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("Строка подключения 'Default' не задана.");
@@ -41,6 +44,14 @@ public static class DependencyInjection
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUserService>();
+
+        services.AddHttpClient<INbrbRatesClient, NbrbRatesClient>((sp, client) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<FxRefreshSettings>>().Value;
+            client.BaseAddress = new Uri(opts.BaseUrl);
+            client.Timeout = opts.HttpTimeout;
+        });
+        services.AddHostedService<FxRatesRefreshService>();
 
         return services;
     }
