@@ -92,14 +92,19 @@ const groupedByDay = computed<DayGroup[]>(() => {
 
     <!-- Grouped list -->
     <div v-else class="space-y-4">
-      <Card
+      <!--
+        Sticky day-header: the header is a direct child of the (non-clipping) section, so it
+        sticks to the viewport below the 56px topbar (top-14). overflow-hidden lives only on the
+        rows container — which is NOT an ancestor of the sticky header — so it rounds the bottom
+        corners without breaking sticky positioning.
+      -->
+      <section
         v-for="group in groupedByDay"
         :key="group.date"
-        padding="none"
-        class="overflow-hidden"
+        class="rounded-lg border border-border bg-surface"
       >
         <div
-          class="px-4 h-10 flex items-center justify-between bg-surface-hi border-b border-border"
+          class="sticky top-14 z-10 px-4 h-10 flex items-center justify-between rounded-t-lg bg-surface-hi border-b border-border"
         >
           <span class="text-[12px] font-semibold uppercase tracking-wider text-fg-muted">
             {{ group.label }}
@@ -108,7 +113,7 @@ const groupedByDay = computed<DayGroup[]>(() => {
             {{ group.items.length }} {{ group.items.length === 1 ? 'операция' : group.items.length < 5 ? 'операции' : 'операций' }}
           </span>
         </div>
-        <div class="divide-y divide-border">
+        <div class="divide-y divide-border overflow-hidden rounded-b-lg">
           <TransactionRow
             v-for="tx in group.items"
             :key="tx.id"
@@ -119,7 +124,7 @@ const groupedByDay = computed<DayGroup[]>(() => {
             @delete="emit('delete', $event)"
           />
         </div>
-      </Card>
+      </section>
 
       <div v-if="hasMore" class="flex justify-center pt-2">
         <Button intent="secondary" :loading="isFetching" @click="emit('loadMore')">
