@@ -4,10 +4,12 @@ using FinanceTracker.Application.Authentication.Commands.Register;
 using FinanceTracker.Application.Authentication.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FinanceTracker.Api.Controllers;
 
 [AllowAnonymous]
+[EnableRateLimiting("auth")]
 [Route("api/auth")]
 public sealed class AuthController : ApiControllerBase
 {
