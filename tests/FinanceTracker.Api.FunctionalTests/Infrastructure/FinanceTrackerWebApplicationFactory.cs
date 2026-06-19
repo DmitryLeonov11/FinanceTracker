@@ -36,6 +36,9 @@ public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<
         Environment.SetEnvironmentVariable("Jwt__AccessTokenMinutes", "5");
         Environment.SetEnvironmentVariable("Jwt__RefreshTokenDays", "1");
         Environment.SetEnvironmentVariable("Cors__Origins__0", "http://localhost");
+        // Keep the auth rate limiter effectively disabled for the shared-fixture flow tests
+        // (all requests partition under the same TestServer client IP).
+        Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "10000");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

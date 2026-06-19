@@ -75,6 +75,37 @@ public class AuthFlowTests : IClassFixture<FinanceTrackerWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Reusing_revoked_refresh_token_should_revoke_the_entire_chain()
+    {
+        var client = _factory.CreateClient();
+        var email = $"reuse-{Guid.NewGuid():N}@test.local";
+        const string password = "Password123";
+
+        var register = await client.PostAsJsonAsync("/api/auth/register",
+            new RegisterRequest(email, password, "Reuse Tester", "BYN"));
+        register.StatusCode.Should().Be(HttpStatusCode.OK);
+        var registered = (await register.Content.ReadFromJsonAsync<AuthResult>())!;
+
+        // Rotate once: original token is now revoked, rotatedToken is the live one.
+        var firstRefresh = await client.PostAsJsonAsync("/api/auth/refresh",
+            new RefreshRequest(registered.RefreshToken));
+        firstRefresh.StatusCode.Should().Be(HttpStatusCode.OK);
+        var rotated = (await firstRefresh.Content.ReadFromJsonAsync<AuthResult>())!;
+
+        // Reuse the already-revoked original token → theft signal, whole chain gets revoked.
+        var reuse = await client.PostAsJsonAsync("/api/auth/refresh",
+            new RefreshRequest(registered.RefreshToken));
+        reuse.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+
+        // The rotated (previously valid) token must now be dead too.
+        var rotatedAfterReuse = await client.PostAsJsonAsync("/api/auth/refresh",
+            new RefreshRequest(rotated.RefreshToken));
+        rotatedAfterReuse.StatusCode.Should().BeOneOf(
+            new[] { HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden },
+            "reuse of a revoked token must revoke the entire refresh-token chain");
+    }
+
+    [Fact]
     public async Task Protected_endpoint_without_token_should_return_401()
     {
         var client = _factory.CreateClient();

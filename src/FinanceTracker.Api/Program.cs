@@ -1,5 +1,8 @@
 using System.Globalization;
+using System.Net;
 using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
 using FinanceTracker.Api.Middleware;
 using FinanceTracker.Api.Realtime;
 using FinanceTracker.Application;
@@ -8,7 +11,10 @@ using FinanceTracker.Infrastructure;
 using FinanceTracker.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -83,6 +89,57 @@ builder.Services.AddCors(opt =>
         .AllowCredentials());
 });
 
+// Trust X-Forwarded-* from the nginx reverse proxy so per-IP rate limiting sees the real
+// client address rather than the proxy's. Only nginx talks to the API inside the compose
+// network, so we trust the forwarded headers unconditionally (clear known proxies/networks).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+const string authRateLimitPolicy = "auth";
+var authRateLimit = builder.Configuration.GetSection("RateLimiting:Auth");
+var permitLimit = authRateLimit.GetValue("PermitLimit", 10);
+var window = authRateLimit.GetValue("Window", TimeSpan.FromMinutes(1));
+var queueLimit = authRateLimit.GetValue("QueueLimit", 0);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy(authRateLimitPolicy, httpContext =>
+    {
+        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = permitLimit,
+            Window = window,
+            QueueLimit = queueLimit
+        });
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+        }
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Слишком много запросов",
+            Detail = "Превышен лимит запросов. Попробуйте позже.",
+            Instance = context.HttpContext.Request.Path
+        };
+        context.HttpContext.Response.ContentType = "application/problem+json";
+        await context.HttpContext.Response.WriteAsync(
+            JsonSerializer.Serialize(problem), cancellationToken);
+    };
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -107,6 +164,8 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 var supportedCultures = new[] { new CultureInfo("ru-RU"), new CultureInfo("en-US") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -125,6 +184,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
