@@ -107,7 +107,7 @@
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 
-  /* live-update flash: тонкий tint фона, исчезающий за ~0.7s */
+  /* вспышка при live-обновлении: лёгкий фон, который гаснет примерно за 0.7s */
   @keyframes flash-up {
     0% {
       background-color: oklch(from var(--success) l c h / 0.18);

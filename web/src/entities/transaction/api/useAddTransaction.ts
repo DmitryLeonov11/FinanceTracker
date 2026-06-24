@@ -60,7 +60,7 @@ export function useAddTransaction() {
         note: cmd.note ?? null
       }
 
-      // Если уже офлайн — даже не пробуем сеть
+      // Уже офлайн? Тогда сеть даже не трогаем
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         await enqueue({
           id,
@@ -77,15 +77,15 @@ export function useAddTransaction() {
 
       try {
         const server = await transactionsApi.create(cmd, id)
-        // успех онлайн: server вернул запись — инвалидация подтянет точные данные
+        // онлайн и сервер ответил: сбрасываем кэш, он подтянет точные данные
         qc.invalidateQueries({ queryKey: ['transactions'] })
         qc.invalidateQueries({ queryKey: ['dashboard'] })
         qc.invalidateQueries({ queryKey: ['accounts'] })
-        // и flush очереди, если что-то лежит из прошлой сессии
+        // заодно сливаем очередь, если с прошлой сессии что-то осталось
         void replayQueue()
         return { transaction: server, queued: false }
       } catch (err) {
-        // первичная попытка упала на сетевой ошибке — кладём в очередь
+        // первая попытка сорвалась на сетевой ошибке? кладём запись в очередь
         if (isNetworkError(err)) {
           await enqueue({
             id,
@@ -99,7 +99,7 @@ export function useAddTransaction() {
           applyOptimisticToCache(qc, optimistic)
           return { transaction: optimistic, queued: true }
         }
-        // permanent ошибка (валидация/доступ/конфликт) — пробрасываем как раньше
+        // постоянная ошибка (валидация, доступ, конфликт): пробрасываем как обычно
         if (err instanceof ApiError) throw err
         throw err
       }

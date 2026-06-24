@@ -66,7 +66,8 @@ public sealed class RecordTransferCommandHandler : IRequestHandler<RecordTransfe
             sourceAmount = Money.Of(request.Amount, source.Currency);
             destinationAmount = Money.Of(request.DestinationAmount.Value, destination.Currency);
 
-            // Зафиксируем курс на момент перевода для audit-следа.
+            // Курс нужен только клиенту в ответе (appliedRate). В базе его не держим,
+            // при случае посчитаем по суммам двух ног перевода (dest/source).
             var conversion = await _converter.ConvertAsync(
                 Money.Of(1m, source.Currency),
                 destination.Currency,

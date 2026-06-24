@@ -1,6 +1,6 @@
 /**
  * Minimal tree-shaken ECharts registration.
- * Загружает только нужные модули, чтобы не тащить все 600KB ECharts в бандл.
+ * Подключаем только нужные модули, чтобы не тянуть в бандл все 600KB ECharts.
  */
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
