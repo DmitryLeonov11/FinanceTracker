@@ -23,7 +23,7 @@ jobs:
       - name: Enable auto-merge on existing Dependabot PRs
         if: github.event_name == 'schedule'
         run: |
-          gh pr list --base master --state open --author "dependabot[bot]" --json number --jq '.[] | .number' | while read pr; do
+          gh pr list --base master --state open --author "dependabot[bot]" --json number --jq '.[] | .number' | while read -r pr; do
             gh pr merge --auto --squash "$pr" || true
           done
         env:
