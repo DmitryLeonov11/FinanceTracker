@@ -1,6 +1,7 @@
 using FinanceTracker.Application.Common.Exceptions;
 using FinanceTracker.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceTracker.Api.Middleware;
 
@@ -59,6 +60,23 @@ public sealed class ExceptionHandlingMiddleware
                 return;
             }
             await WriteProblem(context, StatusCodes.Status409Conflict, "Ошибка бизнес-правила", ex.Message);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Two concurrent writes touched the same aggregate (e.g. balance updates on one account).
+            // The optimistic-concurrency token rejected the second write — surface a retriable 409
+            // instead of a generic 500 so the client can simply replay the request.
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning(ex, "Response already started, cannot write concurrency error");
+                return;
+            }
+            _logger.LogWarning(ex, "Конфликт параллельного изменения");
+            await WriteProblem(
+                context,
+                StatusCodes.Status409Conflict,
+                "Конфликт изменений",
+                "Данные были изменены другим запросом. Повторите попытку.");
         }
         catch (Exception ex)
         {

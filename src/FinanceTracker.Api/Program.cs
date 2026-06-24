@@ -90,13 +90,18 @@ builder.Services.AddCors(opt =>
 });
 
 // Trust X-Forwarded-* from the nginx reverse proxy so per-IP rate limiting sees the real
-// client address rather than the proxy's. Only nginx talks to the API inside the compose
-// network, so we trust the forwarded headers unconditionally (clear known proxies/networks).
+// client address rather than the proxy's. We only honour forwarded headers from RFC1918
+// private ranges (the compose/k8s network the proxy sits on) and process a single hop, so a
+// directly-exposed API port can't spoof X-Forwarded-For to dodge the per-IP auth rate limit.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
 });
 
 const string authRateLimitPolicy = "auth";
@@ -134,9 +139,10 @@ builder.Services.AddRateLimiter(options =>
             Detail = "Превышен лимит запросов. Попробуйте позже.",
             Instance = context.HttpContext.Request.Path
         };
-        context.HttpContext.Response.ContentType = "application/problem+json";
-        await context.HttpContext.Response.WriteAsync(
-            JsonSerializer.Serialize(problem), cancellationToken);
+        // Use WriteAsJsonAsync (not raw JsonSerializer) so the body matches the camelCase
+        // ProblemDetails shape every other error path produces via the exception middleware.
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            problem, options: (JsonSerializerOptions?)null, contentType: "application/problem+json", cancellationToken);
     };
 });
 

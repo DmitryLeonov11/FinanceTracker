@@ -66,7 +66,7 @@ export function useChartTokens() {
     () => ui.isDark,
     (dark) => {
       if (!mounted) return
-      // CSS-переменные обновляются вместе с data-theme — ждём следующий тик
+      // CSS-переменные меняются вместе с data-theme, поэтому ждём следующий кадр
       requestAnimationFrame(() => {
         tokens.value = readTokens(dark)
       })

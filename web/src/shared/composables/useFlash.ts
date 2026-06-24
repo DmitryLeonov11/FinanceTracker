@@ -3,17 +3,17 @@ import { onUnmounted, ref, watch, type Ref } from 'vue'
 export type FlashDirection = 'up' | 'down' | null
 
 interface UseFlashOptions {
-  /** длительность подсветки в мс (default: 700) */
+  /** сколько миллисекунд держать подсветку (по умолчанию 700) */
   duration?: number
-  /** минимальный |delta|, при котором подсветка срабатывает (default: 0.005) */
+  /** насколько должно измениться значение, чтобы подсветка сработала (по умолчанию 0.005) */
   threshold?: number
 }
 
 /**
- * Возвращает ref, который кратковременно становится 'up' или 'down'
- * при изменении наблюдаемого значения. После duration сам сбрасывается в null.
+ * Отдаёт ref, который на короткое время становится 'up' или 'down',
+ * когда меняется значение. Через duration сам гаснет обратно в null.
  *
- * Используется для CSS-флэша карточек после refetch (например, при SignalR-обновлении).
+ * Пригодится для CSS-вспышки карточек после refetch, например когда прилетело обновление по SignalR.
  */
 export function useFlash(source: Ref<number>, options: UseFlashOptions = {}): Ref<FlashDirection> {
   const { duration = 700, threshold = 0.005 } = options

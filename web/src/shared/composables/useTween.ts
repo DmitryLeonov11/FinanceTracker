@@ -4,20 +4,20 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-// ease-out-cubic — наша основная кривая для UI-анимаций
+// ease-out-cubic, основная кривая для анимаций интерфейса
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
 
 interface UseTweenOptions {
-  /** длительность анимации в мс (default: 500) */
+  /** сколько миллисекунд идёт анимация (по умолчанию 500) */
   duration?: number
-  /** не анимировать первое появление значения */
+  /** не анимировать самое первое значение */
   skipFirst?: boolean
 }
 
 /**
- * Превращает реактивное число в плавно меняющееся.
- * При изменении `source` анимирует от текущего отрисованного значения
- * к новому за `duration` мс через easeOutCubic.
+ * Делает из реактивного числа плавно меняющееся.
+ * Когда `source` меняется, число едет от текущего показанного к новому
+ * за `duration` мс по кривой easeOutCubic.
  */
 export function useTween(source: Ref<number>, options: UseTweenOptions = {}): Ref<number> {
   const { duration = 500, skipFirst = true } = options

@@ -75,7 +75,7 @@ public sealed class GetDashboardBalanceQueryHandler : IRequestHandler<GetDashboa
             }
             catch (DomainException)
             {
-                // курс отсутствует — пропускаем эту валюту, флажок approximate выставляем
+                // курса для валюты нет, поэтому пропускаем её и помечаем баланс приблизительным
                 isApproximate = true;
             }
         }
