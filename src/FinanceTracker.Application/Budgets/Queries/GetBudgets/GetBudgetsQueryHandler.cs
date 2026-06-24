@@ -2,7 +2,6 @@ using FinanceTracker.Application.Budgets.Helpers;
 using FinanceTracker.Application.Budgets.Models;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Domain.Transactions;
-using FinanceTracker.Domain.ValueObjects;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,21 +41,41 @@ public sealed class GetBudgetsQueryHandler : IRequestHandler<GetBudgetsQuery, IR
         if (budgets.Count == 0)
             return Array.Empty<BudgetWithProgressDto>();
 
+        // Precompute each budget's active window, then pull all candidate expenses in a single
+        // query over their union range and aggregate per budget in memory — avoids the previous
+        // N+1 (one SUM round-trip per budget).
+        var windows = budgets
+            .Select(b => BudgetPeriodCalculator.GetCurrentWindow(b.Period, b.StartDate, now))
+            .ToArray();
+
+        var rangeFrom = windows.Min(w => w.From);
+        var rangeTo = windows.Max(w => w.To);
+
+        var expenses = await _db.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == userId)
+            .Where(t => t.Type == TransactionType.Expense)
+            .Where(t => t.OccurredAt >= rangeFrom && t.OccurredAt <= rangeTo)
+            .Select(t => new ExpenseRow(
+                t.OccurredAt,
+                t.Amount.Currency.Code,
+                t.Amount.Amount,
+                t.CategoryId))
+            .ToListAsync(cancellationToken);
+
         var result = new List<BudgetWithProgressDto>(budgets.Count);
 
-        foreach (var budget in budgets)
+        for (var i = 0; i < budgets.Count; i++)
         {
-            var (from, to) = BudgetPeriodCalculator.GetCurrentWindow(budget.Period, budget.StartDate, now);
+            var budget = budgets[i];
+            var (from, to) = windows[i];
             var currencyCode = budget.Limit.Currency.Code;
 
-            var spent = await _db.Transactions
-                .AsNoTracking()
-                .Where(t => t.UserId == userId)
-                .Where(t => t.Type == TransactionType.Expense)
-                .Where(t => t.Amount.Currency == Currency.Of(currencyCode))
-                .Where(t => t.OccurredAt >= from && t.OccurredAt <= to)
-                .Where(t => budget.CategoryId == null || t.CategoryId == budget.CategoryId)
-                .SumAsync(t => (decimal?)t.Amount.Amount, cancellationToken) ?? 0m;
+            var spent = expenses
+                .Where(e => e.CurrencyCode == currencyCode
+                    && e.OccurredAt >= from && e.OccurredAt <= to
+                    && (budget.CategoryId == null || e.CategoryId == budget.CategoryId))
+                .Sum(e => e.Amount);
 
             var limit = budget.Limit.Amount;
             var remaining = decimal.Round(limit - spent, 2, MidpointRounding.AwayFromZero);
@@ -95,4 +114,10 @@ public sealed class GetBudgetsQueryHandler : IRequestHandler<GetBudgetsQuery, IR
 
         return result;
     }
+
+    private sealed record ExpenseRow(
+        DateTimeOffset OccurredAt,
+        string CurrencyCode,
+        decimal Amount,
+        Guid? CategoryId);
 }
