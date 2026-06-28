@@ -12,16 +12,13 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { size: 'md' })
 
-const meta = computed<{ icon: IconName; cls: string; label: string }>(() => {
-  switch (props.type) {
-    case 'Income':
-      return { icon: 'arrowDown', cls: 'bg-success-soft text-success', label: 'Доход' }
-    case 'Expense':
-      return { icon: 'arrowUp', cls: 'bg-danger-soft text-danger', label: 'Расход' }
-    case 'Transfer':
-      return { icon: 'swap', cls: 'bg-info-soft text-info', label: 'Перевод' }
-  }
-})
+const META: Record<TransactionType, { icon: IconName; cls: string; label: string }> = {
+  Income: { icon: 'arrowDown', cls: 'bg-success-soft text-success', label: 'Доход' },
+  Expense: { icon: 'arrowUp', cls: 'bg-danger-soft text-danger', label: 'Расход' },
+  Transfer: { icon: 'swap', cls: 'bg-info-soft text-info', label: 'Перевод' }
+}
+
+const meta = computed(() => META[props.type])
 
 const dim = computed(() => (props.size === 'sm' ? 'size-7' : 'size-9'))
 const iconSize = computed(() => (props.size === 'sm' ? 14 : 16))

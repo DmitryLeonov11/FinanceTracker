@@ -27,9 +27,7 @@ const navItems: NavItem[] = [
   { label: t.nav.dashboard, to: '/dashboard', icon: 'home' },
   { label: t.nav.accounts, to: '/accounts', icon: 'wallet' },
   { label: t.nav.transactions, to: '/transactions', icon: 'swap' },
-  { label: t.nav.budgets, to: '/budgets', icon: 'pieChart' },
-  { label: t.nav.goals, to: '/goals', icon: 'target' },
-  { label: t.nav.analytics, to: '/analytics', icon: 'barChart' }
+  { label: t.nav.budgets, to: '/budgets', icon: 'pieChart' }
 ]
 
 const route = useRoute()

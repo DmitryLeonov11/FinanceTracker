@@ -1,6 +1,7 @@
 using FinanceTracker.Application.Budgets.Helpers;
 using FinanceTracker.Application.Common.Interfaces;
 using FinanceTracker.Domain.Transactions;
+using FinanceTracker.Domain.ValueObjects;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -48,7 +49,7 @@ public sealed class ExpenseRecordedNotificationHandler : INotificationHandler<Ex
             .AsNoTracking()
             .Where(b => b.UserId == notification.UserId)
             .Where(b => !b.IsClosed)
-            .Where(b => b.Limit.Currency.Code == notification.Currency)
+            .Where(b => b.Limit.Currency == Currency.Of(notification.Currency))
             .Where(b => b.CategoryId == null || b.CategoryId == notification.CategoryId)
             .ToListAsync(cancellationToken);
 
@@ -59,12 +60,13 @@ public sealed class ExpenseRecordedNotificationHandler : INotificationHandler<Ex
             var (from, to) = BudgetPeriodCalculator.GetCurrentWindow(budget.Period, budget.StartDate, notification.OccurredAt);
             if (notification.OccurredAt < from || notification.OccurredAt > to) continue;
 
-            var currencyCode = budget.Limit.Currency.Code;
+            var currency = budget.Limit.Currency;
+            var currencyCode = currency.Code;
             var newSpent = await _db.Transactions
                 .AsNoTracking()
                 .Where(t => t.UserId == notification.UserId)
                 .Where(t => t.Type == TransactionType.Expense)
-                .Where(t => t.Amount.Currency.Code == currencyCode)
+                .Where(t => t.Amount.Currency == currency)
                 .Where(t => t.OccurredAt >= from && t.OccurredAt <= to)
                 .Where(t => budget.CategoryId == null || t.CategoryId == budget.CategoryId)
                 .SumAsync(t => (decimal?)t.Amount.Amount, cancellationToken) ?? 0m;

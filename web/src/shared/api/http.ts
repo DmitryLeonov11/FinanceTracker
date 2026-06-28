@@ -10,6 +10,7 @@ let unauthorizedHandler: (() => void) | null = null
 interface ExtendedConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
   _skipAuth?: boolean
+  _offlineCleanup?: () => void
 }
 
 export function configureHttp(opts: {
@@ -39,6 +40,13 @@ http.interceptors.request.use((cfg) => {
     if (!c.headers['Idempotency-Key']) {
       c.headers['Idempotency-Key'] = crypto.randomUUID()
     }
+    if (typeof window !== 'undefined' && !c.signal) {
+      const controller = new AbortController()
+      const onOffline = () => controller.abort()
+      window.addEventListener('offline', onOffline)
+      c._offlineCleanup = () => window.removeEventListener('offline', onOffline)
+      c.signal = controller.signal
+    }
   }
   c.headers['Accept-Language'] = 'ru-RU'
   return c
@@ -47,8 +55,13 @@ http.interceptors.request.use((cfg) => {
 let refreshPromise: Promise<string | null> | null = null
 
 http.interceptors.response.use(
-  (r) => r,
+  (r) => {
+    ;(r.config as ExtendedConfig)._offlineCleanup?.()
+    return r
+  },
   async (err: AxiosError) => {
+    ;(err.config as ExtendedConfig | undefined)?._offlineCleanup?.()
+
     if (!err.response) {
       throw new ApiError('Нет соединения с сервером', 0)
     }

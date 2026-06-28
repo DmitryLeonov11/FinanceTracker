@@ -8,8 +8,7 @@ import {
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogDescription,
-  AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogCancel
 } from 'reka-ui'
 
 import { Button } from '@/shared/ui/primitives'
@@ -32,9 +31,10 @@ const signedAmount = computed(() => {
 })
 
 async function onConfirm() {
-  if (!tx.value) return
+  const target = tx.value
+  if (!target) return
   try {
-    await mutateAsync(tx.value.id)
+    await mutateAsync(target.id)
     toast.success('Операция удалена')
     ui.dismissDeleteTransaction()
   } catch (err) {
@@ -92,11 +92,9 @@ async function onConfirm() {
           <AlertDialogCancel as-child>
             <Button intent="ghost" type="button" :disabled="isPending">Отмена</Button>
           </AlertDialogCancel>
-          <AlertDialogAction as-child>
-            <Button intent="danger" :loading="isPending" icon-left="trash" @click="onConfirm">
-              Удалить
-            </Button>
-          </AlertDialogAction>
+          <Button intent="danger" :loading="isPending" icon-left="trash" @click="onConfirm">
+            Удалить
+          </Button>
         </div>
       </AlertDialogContent>
     </AlertDialogPortal>

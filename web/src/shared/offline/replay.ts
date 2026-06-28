@@ -22,8 +22,6 @@ export async function replayQueue(): Promise<void> {
       if (op.retryAfter && now < op.retryAfter) continue
 
       try {
-        // typescript: discriminated union
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (runners as any)[op.type](op)
         await removeFromQueue(op.id)
         pendingIds.value.delete(op.id)

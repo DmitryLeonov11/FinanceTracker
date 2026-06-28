@@ -46,7 +46,7 @@ configureHttp({
   }
 })
 
-realtime.configure(() => auth.accessToken)
+realtime.configure(() => auth.ensureValidAccessToken())
 
 if (auth.isAuthenticated) {
   realtime.connect().catch(() => {
