@@ -38,24 +38,23 @@ public sealed class GetAccountBalanceHistoryQueryHandler
         var fromUtc = new DateTimeOffset(from.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
         var toUtc = new DateTimeOffset(today.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
 
-        var deltas = await _db.Transactions
+        var rows = await _db.Transactions
             .AsNoTracking()
             .Where(t => t.AccountId == account.Id
                      && !t.IsDeleted
                      && t.OccurredAt >= fromUtc
                      && t.OccurredAt <= toUtc)
-            .GroupBy(t => t.OccurredAt.UtcDateTime.Date)
-            .Select(g => new
-            {
-                Date = g.Key,
-                Delta = g.Sum(t =>
-                    t.Type == TransactionType.Income ? t.Amount.Amount :
-                    t.Type == TransactionType.Expense ? -t.Amount.Amount :
-                    t.IsOutgoing ? -t.Amount.Amount : t.Amount.Amount)
-            })
+            .Select(t => new { t.OccurredAt, t.Type, t.IsOutgoing, Amount = t.Amount.Amount })
             .ToListAsync(cancellationToken);
 
-        var deltasByDay = deltas.ToDictionary(x => DateOnly.FromDateTime(x.Date), x => x.Delta);
+        var deltasByDay = rows
+            .GroupBy(t => t.OccurredAt.UtcDateTime.Date)
+            .ToDictionary(
+                g => DateOnly.FromDateTime(g.Key),
+                g => g.Sum(t =>
+                    t.Type == TransactionType.Income ? t.Amount :
+                    t.Type == TransactionType.Expense ? -t.Amount :
+                    t.IsOutgoing ? -t.Amount : t.Amount));
 
         var points = BalanceHistoryCalculator.Compute(account.Balance, today, request.Days, deltasByDay);
 

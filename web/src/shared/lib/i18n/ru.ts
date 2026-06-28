@@ -37,7 +37,7 @@ export const ru = {
   },
   dashboard: {
     greeting: (name: string) => `Привет, ${name}`,
-    netWorth: 'Чистая стоимость',
+    netWorth: 'Общий баланс',
     accountsCount: (n: number) =>
       n === 1 ? 'на 1 счёте' : n >= 2 && n <= 4 ? `на ${n} счетах` : `на ${n} счетах`,
     perCurrency: 'По валютам',

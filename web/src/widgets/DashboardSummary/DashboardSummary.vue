@@ -59,7 +59,7 @@ const flash = useFlash(grandTotal)
         <div class="flex items-start justify-between gap-4">
           <div>
             <p class="text-[13px] text-fg-muted uppercase tracking-wider font-medium">
-              Чистая стоимость
+              Общий баланс
             </p>
             <div class="mt-2 flex items-baseline gap-2">
               <span v-if="isApproximate" class="text-fg-muted text-[28px] font-semibold leading-none" :title="'Курсы валют устарели — сумма приблизительная'">≈</span>

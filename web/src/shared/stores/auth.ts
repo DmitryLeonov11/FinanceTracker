@@ -41,6 +41,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
 
+  const EXPIRY_SKEW_MS = 30_000
+
   function applyAuthResult(result: AuthResult) {
     accessToken.value = result.accessToken
     accessTokenExpiresAt.value = result.accessTokenExpiresAt
@@ -71,16 +73,37 @@ export const useAuthStore = defineStore('auth', () => {
     applyAuthResult(result)
   }
 
+  // Deduplicate concurrent refreshes (http 401 interceptor + SignalR factory can
+  // race). Rotating refresh tokens are single-use, so two parallel calls would
+  // invalidate each other.
+  let refreshInFlight: Promise<string | null> | null = null
+
   async function refresh(): Promise<string | null> {
     if (!refreshToken.value) return null
-    try {
-      const result = await authApi.refresh(refreshToken.value)
-      applyAuthResult(result)
-      return result.accessToken
-    } catch {
-      logout()
-      return null
+    if (refreshInFlight) return refreshInFlight
+    refreshInFlight = (async () => {
+      try {
+        const result = await authApi.refresh(refreshToken.value!)
+        applyAuthResult(result)
+        return result.accessToken
+      } catch {
+        logout()
+        return null
+      }
+    })().finally(() => {
+      refreshInFlight = null
+    })
+    return refreshInFlight
+  }
+
+  /** Returns a non-expired access token, refreshing proactively if needed. */
+  async function ensureValidAccessToken(): Promise<string | null> {
+    if (!accessToken.value) return null
+    const expiresAt = accessTokenExpiresAt.value ? Date.parse(accessTokenExpiresAt.value) : NaN
+    if (!Number.isNaN(expiresAt) && expiresAt - Date.now() < EXPIRY_SKEW_MS) {
+      return await refresh()
     }
+    return accessToken.value
   }
 
   function logout() {
@@ -93,12 +116,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     accessToken,
+    accessTokenExpiresAt,
     refreshToken,
     user,
     isAuthenticated,
     login,
     register,
     refresh,
+    ensureValidAccessToken,
     logout
   }
 })

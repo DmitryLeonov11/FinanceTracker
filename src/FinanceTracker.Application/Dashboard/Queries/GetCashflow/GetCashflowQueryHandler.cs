@@ -40,20 +40,24 @@ public sealed class GetCashflowQueryHandler : IRequestHandler<GetCashflowQuery, 
         var to = new DateTimeOffset(now.Date.AddDays(1), TimeSpan.Zero).AddTicks(-1);
         var from = new DateTimeOffset(now.Date.AddDays(-(request.Days - 1)), TimeSpan.Zero);
 
-        var grouped = await _db.Transactions
+        var rows = await _db.Transactions
             .AsNoTracking()
             .Where(t => t.UserId == userId)
             .Where(t => t.Type == TransactionType.Income || t.Type == TransactionType.Expense)
             .Where(t => t.Amount.Currency == Currency.Of(currency))
             .Where(t => t.OccurredAt >= from && t.OccurredAt <= to)
+            .Select(t => new { t.OccurredAt, t.Type, Amount = t.Amount.Amount })
+            .ToListAsync(cancellationToken);
+
+        var grouped = rows
             .GroupBy(t => new { Date = t.OccurredAt.UtcDateTime.Date, t.Type })
             .Select(g => new
             {
                 g.Key.Date,
                 g.Key.Type,
-                Amount = g.Sum(t => t.Amount.Amount)
+                Amount = g.Sum(t => t.Amount)
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var byDate = new Dictionary<DateOnly, (decimal income, decimal expense)>();
         foreach (var row in grouped)

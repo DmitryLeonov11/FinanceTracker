@@ -8,8 +8,7 @@ import {
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogDescription,
-  AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogCancel
 } from 'reka-ui'
 
 import { Button } from '@/shared/ui/primitives'
@@ -48,8 +47,8 @@ const closing = ref<BudgetWithProgress | null>(null)
 const { mutateAsync: closeBudget, isPending: isClosing } = useCloseBudget()
 
 async function confirmClose() {
-  if (!closing.value) return
   const target = closing.value
+  if (!target) return
   try {
     await closeBudget(target.id)
     toast.success(`Бюджет «${target.name}» закрыт`)
@@ -125,9 +124,7 @@ async function confirmClose() {
             <AlertDialogCancel as-child>
               <Button intent="ghost" type="button">Отмена</Button>
             </AlertDialogCancel>
-            <AlertDialogAction as-child>
-              <Button intent="danger" :loading="isClosing" @click="confirmClose">Закрыть</Button>
-            </AlertDialogAction>
+            <Button intent="danger" :loading="isClosing" @click="confirmClose">Закрыть</Button>
           </div>
         </AlertDialogContent>
       </AlertDialogPortal>
