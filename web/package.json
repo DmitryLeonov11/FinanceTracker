@@ -21,7 +21,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "echarts": "^6.0.0",
-    "idb-keyval": "^6.2.5",
+    "idb-keyval": "^6.2.6",
     "motion-v": "^2.3.0",
     "pinia": "^3.0.4",
     "reka-ui": "^2.10.0",
