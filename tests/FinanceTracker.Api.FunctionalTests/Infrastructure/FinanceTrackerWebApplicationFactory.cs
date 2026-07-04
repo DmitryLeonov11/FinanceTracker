@@ -10,11 +10,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FinanceTracker.Api.FunctionalTests.Infrastructure;
 
-/// <summary>
-/// Hosts the API in-process backed by an in-memory SQLite database.
-/// SQLite uses real SQL semantics (real transactions, constraint checks) — closer to Postgres
-/// than EF Core InMemory, while avoiding any external dependency.
-/// </summary>
 public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly DbConnection _connection;
@@ -24,11 +19,8 @@ public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<
     public FinanceTrackerWebApplicationFactory()
     {
         _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open(); // must stay open for the lifetime of the in-memory DB
+        _connection.Open();
 
-        // Program.cs validates Jwt:SigningKey and Cors:Origins at builder-time, before
-        // WebApplicationFactory's ConfigureAppConfiguration kicks in. Process env vars are
-        // picked up by WebApplication.CreateBuilder() via the default env-var config source.
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", "Data Source=:memory:");
         Environment.SetEnvironmentVariable("Jwt__SigningKey", "TEST_KEY_AT_LEAST_32_CHARACTERS_LONG_FOR_HS256");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "FinanceTracker.Tests");
@@ -36,8 +28,6 @@ public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<
         Environment.SetEnvironmentVariable("Jwt__AccessTokenMinutes", "5");
         Environment.SetEnvironmentVariable("Jwt__RefreshTokenDays", "1");
         Environment.SetEnvironmentVariable("Cors__Origins__0", "http://localhost");
-        // Keep the auth rate limiter effectively disabled for the shared-fixture flow tests
-        // (all requests partition under the same TestServer client IP).
         Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "10000");
     }
 
@@ -47,8 +37,6 @@ public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<
 
         builder.ConfigureServices(services =>
         {
-            // Wipe all EF-related registrations from the production stack (Npgsql provider services
-            // are scattered across DbContextOptions, ApplicationDbContext, and EF internal services).
             var efDescriptors = services
                 .Where(d =>
                     d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
@@ -61,9 +49,7 @@ public sealed class FinanceTrackerWebApplicationFactory : WebApplicationFactory<
             services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {
                 options.UseSqlite(_connection);
-                options.AddInterceptors(
-                    sp.GetRequiredService<AuditableEntityInterceptor>(),
-                    sp.GetRequiredService<DispatchDomainEventsInterceptor>());
+                options.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             });
 
             services.AddScoped<FinanceTracker.Application.Common.Interfaces.IApplicationDbContext>(

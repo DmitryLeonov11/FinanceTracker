@@ -2,13 +2,6 @@ import { onMounted, onUnmounted } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { realtime } from '@/shared/api/signalr'
 
-/**
- * Subscribes to realtime events from the server hub and invalidates the
- * matching Vue Query keys, triggering automatic refetches.
- *
- * Mount inside a layout or top-level page so a single subscription drives
- * all server-state cache for the user.
- */
 export function useRealtimeInvalidation() {
   const qc = useQueryClient()
   let off: (() => void) | null = null
@@ -16,8 +9,6 @@ export function useRealtimeInvalidation() {
   onMounted(() => {
     off = realtime.on(({ eventName }) => {
       switch (eventName) {
-        case 'AccountCreatedEvent':
-        case 'BalanceChangedEvent':
         case 'account.created':
         case 'account.balance-changed':
         case 'account.renamed':
@@ -25,8 +16,9 @@ export function useRealtimeInvalidation() {
           qc.invalidateQueries({ queryKey: ['dashboard'] })
           qc.invalidateQueries({ queryKey: ['accounts'] })
           break
-        case 'TransactionRecordedEvent':
         case 'transaction.created':
+        case 'transaction.updated':
+        case 'transaction.deleted':
           qc.invalidateQueries({ queryKey: ['dashboard'] })
           qc.invalidateQueries({ queryKey: ['transactions'] })
           qc.invalidateQueries({ queryKey: ['accounts'] })
@@ -35,7 +27,7 @@ export function useRealtimeInvalidation() {
         case 'budget.created':
         case 'budget.updated':
         case 'budget.closed':
-        case 'BudgetThresholdReachedEvent':
+        case 'budget.threshold-reached':
           qc.invalidateQueries({ queryKey: ['budgets'] })
           break
       }

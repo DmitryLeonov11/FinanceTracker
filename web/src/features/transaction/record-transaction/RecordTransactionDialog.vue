@@ -223,7 +223,7 @@ function handleSubmitError(err: unknown) {
           </DialogClose>
         </header>
 
-        <form class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
+        <form id="record-transaction-form" class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
           <!-- Type toggle -->
           <div
             class="grid grid-cols-2 gap-1 p-1 bg-surface-sunk rounded-md"
@@ -336,10 +336,10 @@ function handleSubmitError(err: unknown) {
           </DialogClose>
           <Button
             type="submit"
+            form="record-transaction-form"
             :loading="isPending"
             :disabled="!accountsData?.length"
             :icon-left="isEditMode ? 'check' : 'plus'"
-            @click="onSubmit"
           >
             {{ isEditMode ? 'Сохранить' : 'Добавить' }}
           </Button>

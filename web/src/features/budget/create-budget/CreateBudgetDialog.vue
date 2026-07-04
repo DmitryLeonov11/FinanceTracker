@@ -147,7 +147,7 @@ async function onSubmit(e: Event) {
           </DialogClose>
         </header>
 
-        <form class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
+        <form id="create-budget-form" class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
           <Field label="Название" :error="errors.name" required>
             <template #default="{ invalid }">
               <Input v-model="form.name" placeholder="Например, Еда" :invalid="invalid" />
@@ -240,7 +240,7 @@ async function onSubmit(e: Event) {
           <DialogClose as-child>
             <Button intent="ghost" type="button">{{ t.common.cancel }}</Button>
           </DialogClose>
-          <Button type="submit" :loading="isPending" icon-left="plus" @click="onSubmit">
+          <Button type="submit" form="create-budget-form" :loading="isPending" icon-left="plus">
             Создать
           </Button>
         </footer>

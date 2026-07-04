@@ -44,11 +44,10 @@ public sealed class EditTransactionCommandHandler : IRequestHandler<EditTransact
                 throw new NotFoundException("Категория", categoryId);
         }
 
-        // Reverse old delta from balance, then apply new amount via domain Edit, then apply new delta.
         var oldDelta = transaction.Type == TransactionType.Income
             ? transaction.Amount
             : transaction.Amount.Negate();
-        account.Apply(oldDelta.Negate());
+        account.ApplyCorrection(oldDelta.Negate());
 
         var newAmount = Money.Of(request.Amount, account.Currency);
         transaction.Edit(newAmount, request.CategoryId, request.OccurredAt, request.Note);
@@ -56,7 +55,7 @@ public sealed class EditTransactionCommandHandler : IRequestHandler<EditTransact
         var newDelta = transaction.Type == TransactionType.Income
             ? newAmount
             : newAmount.Negate();
-        account.Apply(newDelta);
+        account.ApplyCorrection(newDelta);
 
         await _db.SaveChangesAsync(cancellationToken);
 

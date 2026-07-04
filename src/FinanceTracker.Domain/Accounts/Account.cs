@@ -51,6 +51,13 @@ public sealed class Account : AggregateRoot
     public void Apply(Money delta)
     {
         EnsureNotArchived();
+        ApplyCore(delta);
+    }
+
+    public void ApplyCorrection(Money delta) => ApplyCore(delta);
+
+    private void ApplyCore(Money delta)
+    {
         if (!delta.Currency.Equals(Currency))
             throw new CurrencyMismatchException(Currency.Code, delta.Currency.Code);
 

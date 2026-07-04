@@ -7,7 +7,7 @@ function getFormatter(maximumFractionDigits: number) {
   let f = formatters.get(key)
   if (!f) {
     f = new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: 2,
+      minimumFractionDigits: Math.min(2, maximumFractionDigits),
       maximumFractionDigits,
       useGrouping: true
     })
@@ -17,11 +17,8 @@ function getFormatter(maximumFractionDigits: number) {
 }
 
 export interface FormatMoneyOptions {
-  /** show + sign for positive */
   showSign?: boolean
-  /** strip decimals if integer */
   trimZeros?: boolean
-  /** include currency symbol/code (default: true) */
   withSymbol?: boolean
 }
 
@@ -37,7 +34,6 @@ export function formatMoney(amount: number, currency: CurrencyCode, opts: Format
   return `${sign}${num} ${sym}`
 }
 
-/** Splits a money string into integer + decimal + currency parts for typographic alignment. */
 export function splitMoney(amount: number, currency: CurrencyCode) {
   const isNeg = amount < 0
   const abs = Math.abs(amount)

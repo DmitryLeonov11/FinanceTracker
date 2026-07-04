@@ -52,8 +52,6 @@ http.interceptors.request.use((cfg) => {
   return c
 })
 
-let refreshPromise: Promise<string | null> | null = null
-
 http.interceptors.response.use(
   (r) => {
     ;(r.config as ExtendedConfig)._offlineCleanup?.()
@@ -71,21 +69,20 @@ http.interceptors.response.use(
 
     if (status === 401 && cfg && !cfg._retry && !cfg._skipAuth && refreshHandler) {
       cfg._retry = true
+      let newToken: string | null = null
+      let refreshUnavailable = false
       try {
-        if (!refreshPromise) {
-          refreshPromise = refreshHandler().finally(() => {
-            refreshPromise = null
-          })
-        }
-        const newToken = await refreshPromise
-        if (newToken) {
-          cfg.headers.Authorization = `Bearer ${newToken}`
-          return http(cfg)
-        }
+        newToken = await refreshHandler()
       } catch {
-        // refresh failed — fall through
+        refreshUnavailable = true
       }
-      unauthorizedHandler?.()
+      if (newToken) {
+        cfg.headers.Authorization = `Bearer ${newToken}`
+        cfg.signal = undefined
+        cfg._offlineCleanup = undefined
+        return http(cfg)
+      }
+      if (!refreshUnavailable) unauthorizedHandler?.()
     }
 
     const parsed = ProblemDetailsSchema.safeParse(err.response.data)

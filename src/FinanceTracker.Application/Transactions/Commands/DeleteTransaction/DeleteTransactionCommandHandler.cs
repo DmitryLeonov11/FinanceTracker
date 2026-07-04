@@ -1,5 +1,6 @@
 using FinanceTracker.Application.Common.Exceptions;
 using FinanceTracker.Application.Common.Interfaces;
+using FinanceTracker.Domain.Accounts;
 using FinanceTracker.Domain.Exceptions;
 using FinanceTracker.Domain.Transactions;
 using MediatR;
@@ -44,21 +45,20 @@ public sealed class DeleteTransactionCommandHandler : IRequestHandler<DeleteTran
             var outgoing = transfers.SingleOrDefault(t => t.IsOutgoing);
             var incoming = transfers.SingleOrDefault(t => !t.IsOutgoing);
 
+            var deletedIds = new List<Guid>();
+            var touchedAccounts = new List<Account>();
+
             if (outgoing != null)
             {
                 var sourceAccount = await _db.Accounts
                     .SingleOrDefaultAsync(a => a.Id == outgoing.AccountId && a.UserId == userId, cancellationToken);
                 if (sourceAccount != null)
                 {
-                    sourceAccount.Apply(outgoing.Amount);
-                    await _notifier.NotifyUserAsync(
-                        userId,
-                        "account.balance-changed",
-                        new { AccountId = sourceAccount.Id, Balance = sourceAccount.Balance.Amount, Currency = sourceAccount.Currency.Code },
-                        cancellationToken);
+                    sourceAccount.ApplyCorrection(outgoing.Amount);
+                    touchedAccounts.Add(sourceAccount);
                 }
                 outgoing.SoftDelete();
-                await _notifier.NotifyUserAsync(userId, "transaction.deleted", new { Id = outgoing.Id }, cancellationToken);
+                deletedIds.Add(outgoing.Id);
             }
 
             if (incoming != null)
@@ -67,18 +67,23 @@ public sealed class DeleteTransactionCommandHandler : IRequestHandler<DeleteTran
                     .SingleOrDefaultAsync(a => a.Id == incoming.AccountId && a.UserId == userId, cancellationToken);
                 if (destAccount != null)
                 {
-                    destAccount.Apply(incoming.Amount.Negate());
-                    await _notifier.NotifyUserAsync(
-                        userId,
-                        "account.balance-changed",
-                        new { AccountId = destAccount.Id, Balance = destAccount.Balance.Amount, Currency = destAccount.Currency.Code },
-                        cancellationToken);
+                    destAccount.ApplyCorrection(incoming.Amount.Negate());
+                    touchedAccounts.Add(destAccount);
                 }
                 incoming.SoftDelete();
-                await _notifier.NotifyUserAsync(userId, "transaction.deleted", new { Id = incoming.Id }, cancellationToken);
+                deletedIds.Add(incoming.Id);
             }
 
             await _db.SaveChangesAsync(cancellationToken);
+
+            foreach (var id in deletedIds)
+                await _notifier.NotifyUserAsync(userId, "transaction.deleted", new { Id = id }, cancellationToken);
+            foreach (var acc in touchedAccounts)
+                await _notifier.NotifyUserAsync(
+                    userId,
+                    "account.balance-changed",
+                    new { AccountId = acc.Id, Balance = acc.Balance.Amount, Currency = acc.Currency.Code },
+                    cancellationToken);
             return;
         }
 
@@ -86,13 +91,10 @@ public sealed class DeleteTransactionCommandHandler : IRequestHandler<DeleteTran
             .SingleOrDefaultAsync(a => a.Id == transaction.AccountId && a.UserId == userId, cancellationToken)
             ?? throw new NotFoundException("Счёт", transaction.AccountId);
 
-        // Reverse the original delta:
-        //   Income — original was +amount, reverse = -amount
-        //   Expense — original was -amount, reverse = +amount
         var reverse = transaction.Type == TransactionType.Income
             ? transaction.Amount.Negate()
             : transaction.Amount;
-        account.Apply(reverse);
+        account.ApplyCorrection(reverse);
         transaction.SoftDelete();
 
         await _db.SaveChangesAsync(cancellationToken);

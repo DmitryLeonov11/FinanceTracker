@@ -20,7 +20,6 @@ public class BudgetPeriodCalculatorTests
     [Fact]
     public void Week_window_should_start_on_monday()
     {
-        // 13 May 2026 is a Wednesday → window should start Mon 11 May
         var (from, to) = BudgetPeriodCalculator.GetCurrentWindow(
             BudgetPeriod.Week,
             startDate: new DateOnly(2026, 1, 1),
@@ -34,7 +33,6 @@ public class BudgetPeriodCalculatorTests
     [Fact]
     public void Week_window_when_today_is_sunday()
     {
-        // 17 May 2026 is a Sunday → window should still span Mon 11 .. Sun 17
         var (from, _) = BudgetPeriodCalculator.GetCurrentWindow(
             BudgetPeriod.Week,
             startDate: new DateOnly(2026, 1, 1),
@@ -45,12 +43,12 @@ public class BudgetPeriodCalculatorTests
     }
 
     [Theory]
-    [InlineData(1, 1)]   // Jan → Q1 starts Jan 1
+    [InlineData(1, 1)]
     [InlineData(2, 1)]
     [InlineData(3, 1)]
-    [InlineData(4, 4)]   // Apr → Q2 starts Apr 1
-    [InlineData(7, 7)]   // Jul → Q3
-    [InlineData(10, 10)] // Oct → Q4
+    [InlineData(4, 4)]
+    [InlineData(7, 7)]
+    [InlineData(10, 10)]
     [InlineData(12, 10)]
     public void Quarter_window_should_align_to_calendar_quarters(int currentMonth, int expectedStartMonth)
     {
@@ -76,9 +74,20 @@ public class BudgetPeriodCalculatorTests
     }
 
     [Fact]
+    public void First_partial_window_should_end_at_calendar_boundary()
+    {
+        var (from, to) = BudgetPeriodCalculator.GetCurrentWindow(
+            BudgetPeriod.Month,
+            startDate: new DateOnly(2026, 6, 15),
+            now: new DateTimeOffset(2026, 6, 20, 12, 0, 0, TimeSpan.Zero));
+
+        from.UtcDateTime.Should().Be(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+        to.UtcDateTime.Date.Should().Be(new DateTime(2026, 6, 30));
+    }
+
+    [Fact]
     public void StartDate_in_future_should_clamp_today_up_to_start()
     {
-        // StartDate ahead of now → window should anchor at startDate
         var (from, _) = BudgetPeriodCalculator.GetCurrentWindow(
             BudgetPeriod.Month,
             startDate: new DateOnly(2027, 1, 1),

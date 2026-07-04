@@ -24,7 +24,6 @@ public static class DependencyInjection
 
         services.AddSingleton<IDateTime, SystemDateTime>();
         services.AddScoped<AuditableEntityInterceptor>();
-        services.AddScoped<DispatchDomainEventsInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
@@ -32,9 +31,7 @@ public static class DependencyInjection
             {
                 npg.MigrationsHistoryTable("__ef_migrations_history");
             });
-            options.AddInterceptors(
-                sp.GetRequiredService<AuditableEntityInterceptor>(),
-                sp.GetRequiredService<DispatchDomainEventsInterceptor>());
+            options.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
         });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
