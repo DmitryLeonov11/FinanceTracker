@@ -36,8 +36,7 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResu
             .Include(u => u.RefreshTokens)
             .SingleOrDefaultAsync(u => u.Email == email, cancellationToken);
 
-        var passwordHash = user?.PasswordHash ?? "dummy";
-        if (!_passwordHasher.Verify(request.Password, passwordHash) || user is null)
+        if (!_passwordHasher.Verify(request.Password, user?.PasswordHash) || user is null)
             throw new ForbiddenAccessException("Неверный email или пароль.", true);
 
         var access = _jwt.IssueAccessToken(user);

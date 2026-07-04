@@ -80,7 +80,7 @@ public sealed class AddTransactionCommandHandler : IRequestHandler<AddTransactio
                     account.Currency.Code,
                     amount.Amount,
                     request.OccurredAt),
-                cancellationToken);
+                CancellationToken.None);
         }
 
         return new TransactionDto(

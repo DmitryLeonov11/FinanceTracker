@@ -65,6 +65,15 @@ public class AccountTests
     }
 
     [Fact]
+    public void ApplyCorrection_to_archived_account_should_adjust_balance()
+    {
+        var account = NewAccount(100m);
+        account.Archive();
+        account.ApplyCorrection(Money.Of(-40m, Byn));
+        account.Balance.Amount.Should().Be(60m);
+    }
+
+    [Fact]
     public void Rename_to_archived_account_should_throw()
     {
         var account = NewAccount();

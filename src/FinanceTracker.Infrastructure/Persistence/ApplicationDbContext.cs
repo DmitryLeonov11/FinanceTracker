@@ -20,6 +20,7 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxRate> FxRates => Set<FxRate>();
     public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

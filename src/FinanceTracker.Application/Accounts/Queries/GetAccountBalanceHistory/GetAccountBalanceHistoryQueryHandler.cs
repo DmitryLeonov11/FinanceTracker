@@ -41,7 +41,6 @@ public sealed class GetAccountBalanceHistoryQueryHandler
         var rows = await _db.Transactions
             .AsNoTracking()
             .Where(t => t.AccountId == account.Id
-                     && !t.IsDeleted
                      && t.OccurredAt >= fromUtc
                      && t.OccurredAt <= toUtc)
             .Select(t => new { t.OccurredAt, t.Type, t.IsOutgoing, Amount = t.Amount.Amount })

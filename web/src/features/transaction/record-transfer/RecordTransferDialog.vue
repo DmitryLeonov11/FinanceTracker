@@ -229,7 +229,7 @@ async function onSubmit(e: Event) {
           </DialogClose>
         </header>
 
-        <form class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
+        <form id="record-transfer-form" class="flex-1 overflow-auto px-5 py-5 space-y-5" novalidate @submit="onSubmit">
           <Field label="Откуда" :error="errors.sourceAccountId" required>
             <div v-if="accountsData?.length" class="grid gap-2">
               <button
@@ -357,10 +357,10 @@ async function onSubmit(e: Event) {
           </DialogClose>
           <Button
             type="submit"
+            form="record-transfer-form"
             :loading="isPending"
             :disabled="!destinationCandidates.length"
             icon-left="swap"
-            @click="onSubmit"
           >
             Перевести
           </Button>

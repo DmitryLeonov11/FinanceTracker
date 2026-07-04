@@ -194,6 +194,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<IdempotencyMiddleware>();
+
 app.MapControllers();
 app.MapHub<UserHub>(UserHub.Path);
 

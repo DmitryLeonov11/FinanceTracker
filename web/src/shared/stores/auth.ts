@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { authApi } from '@/entities/user/api/authApi'
+import { ApiError } from '@/shared/api/errors'
+import { realtime } from '@/shared/api/signalr'
+import { clearQueue } from '@/shared/offline/queue'
+import { refreshPendingIds } from '@/shared/offline/state'
+import { queryClient } from '@/app/plugins/vueQuery'
 import type { AuthResult, CurrentUser, LoginCommand, RegisterCommand } from '@/entities/user/model/schemas'
 
 const STORAGE_KEY = 'ft-auth'
@@ -18,7 +23,14 @@ interface PersistedAuth {
 function load(): PersistedAuth | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as PersistedAuth) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as PersistedAuth
+    const refreshExpiresAt = Date.parse(parsed.refreshTokenExpiresAt)
+    if (!Number.isNaN(refreshExpiresAt) && refreshExpiresAt <= Date.now()) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -73,9 +85,6 @@ export const useAuthStore = defineStore('auth', () => {
     applyAuthResult(result)
   }
 
-  // Deduplicate concurrent refreshes (http 401 interceptor + SignalR factory can
-  // race). Rotating refresh tokens are single-use, so two parallel calls would
-  // invalidate each other.
   let refreshInFlight: Promise<string | null> | null = null
 
   async function refresh(): Promise<string | null> {
@@ -86,9 +95,12 @@ export const useAuthStore = defineStore('auth', () => {
         const result = await authApi.refresh(refreshToken.value!)
         applyAuthResult(result)
         return result.accessToken
-      } catch {
-        logout()
-        return null
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          logout()
+          return null
+        }
+        throw err
       }
     })().finally(() => {
       refreshInFlight = null
@@ -96,7 +108,6 @@ export const useAuthStore = defineStore('auth', () => {
     return refreshInFlight
   }
 
-  /** Returns a non-expired access token, refreshing proactively if needed. */
   async function ensureValidAccessToken(): Promise<string | null> {
     if (!accessToken.value) return null
     const expiresAt = accessTokenExpiresAt.value ? Date.parse(accessTokenExpiresAt.value) : NaN
@@ -112,6 +123,9 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     user.value = null
     save(null)
+    void realtime.disconnect().catch(() => {})
+    void clearQueue().then(() => refreshPendingIds())
+    queryClient.clear()
   }
 
   return {
