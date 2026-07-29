@@ -23,7 +23,7 @@
     "echarts": "^6.0.0",
     "idb-keyval": "^6.2.6",
     "motion-v": "^2.3.0",
-    "pinia": "^4.0.2",
+    "pinia": "^3.0.4",
     "reka-ui": "^2.10.1",
     "tailwind-merge": "^3.6.0",
     "vee-validate": "^4.15.1",
