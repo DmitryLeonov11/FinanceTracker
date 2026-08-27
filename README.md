@@ -1,12 +1,12 @@
 # Finance Tracker
 
-Личный финансовый трекер: учёт счетов, операций, бюджетов и целей в нескольких валютах (BYN / USD / EUR / RUB). Интерфейс на русском, real-time обновления через SignalR, PWA с офлайн-режимом.
+Личный финансовый трекер: учёт счетов, операций, бюджетов и целей в нескольких валютах (BYN, USD, EUR, RUB). Интерфейс на русском, обновления приходят в реальном времени через SignalR, работает как PWA и не разваливается без интернета.
 
 ## Архитектура
 
-**Backend** — .NET 8, Clean Architecture (Domain · Application · Infrastructure · API), CQRS на MediatR, EF Core 8 + PostgreSQL, JWT с rotation refresh-токенов, SignalR-хаб для пользовательских событий, FluentValidation, локализация ProblemDetails на русский.
+Backend на .NET 8, собран по Clean Architecture: Domain, Application, Infrastructure и API разложены по отдельным слоям. Бизнес-логика идёт через CQRS на MediatR, данные хранятся в PostgreSQL через EF Core 8. Авторизация на JWT с ротацией refresh-токенов, события пользователю прилетают через SignalR-хаб, валидация на FluentValidation, а ошибки в формате ProblemDetails возвращаются по-русски.
 
-**Frontend** — Vue 3 + TypeScript, Vite 5, Feature-Sliced Design, Tailwind v4 c OKLCH-токенами и тройной темой (light / dark / system), Pinia + TanStack Query, axios с silent refresh и Idempotency-Key, PWA через Workbox, кастомный SVG icon-set, шрифты Inter + JetBrains Mono через Google Fonts CDN.
+Frontend на Vue 3 и TypeScript, собран Vite 5 по методологии Feature-Sliced Design. Стили на Tailwind v4 с OKLCH-токенами и тремя темами: светлой, тёмной и системной. Состояние живёт в Pinia и TanStack Query, а axios сам обновляет токен и подставляет Idempotency-Key в каждый запрос. PWA собран через Workbox, иконки свои, шрифты Inter и JetBrains Mono подключены через Google Fonts.
 
 ```text
 Browser ──► nginx :5173 ──┬─► /api    → api :8080
@@ -57,7 +57,7 @@ FinanceTracker/
 Нужны только Docker Desktop и Compose v2.
 
 ```powershell
-# 1. Скопировать env-шаблон (можно пропустить — .env уже лежит с дев-значениями)
+# 1. Скопировать env-шаблон (можно пропустить: .env уже лежит с dev-значениями)
 Copy-Item .env.example .env
 
 # 2. Поднять весь стек
@@ -67,18 +67,18 @@ docker compose up -d
 start http://localhost:5173
 ```
 
-Что произойдёт:
+Дальше происходит вот что:
 
 1. `postgres` стартует и проходит healthcheck.
-2. `migrator` (self-contained EF bundle) применяет миграции и завершается.
-3. `api` стартует, ждёт healthy postgres + completed migrator.
-4. `web` (nginx + статика) стартует и начинает проксировать `/api` и `/hubs` на api.
+2. `migrator` (самодостаточный EF-бандл) накатывает миграции и завершает работу.
+3. `api` стартует, дождавшись здорового postgres и завершённого migrator.
+4. `web` (nginx со статикой) стартует и начинает проксировать `/api` и `/hubs` на api.
 
 Остановить:
 
 ```powershell
-docker compose down            # сохранит данные
-docker compose down -v         # сотрёт том postgres
+docker compose down            # данные останутся
+docker compose down -v         # удалит том postgres вместе с данными
 ```
 
 ## Доступные адреса
@@ -94,7 +94,7 @@ docker compose down -v         # сотрёт том postgres
 
 ## Переменные окружения
 
-Все настройки — в `.env` (в репозитории дев-значения; для прода переопределить):
+Все настройки лежат в `.env`. В репозитории уже есть dev-значения, для продакшена их нужно поменять:
 
 | Переменная | По умолчанию | Назначение |
 | --- | --- | --- |
@@ -107,11 +107,11 @@ docker compose down -v         # сотрёт том postgres
 | `CORS_ORIGIN` | `http://localhost:5173` | разрешённый origin для cross-origin вызовов |
 | `ALLOWED_HOSTS` | `localhost;127.0.0.1;api;web` | Host-header allowlist |
 | `VITE_API_BASE_URL` | `/api` | base URL, запекается в SPA-бандл |
-| `VITE_SENTRY_DSN` | (пусто) | если задан — включается `@sentry/vue` |
+| `VITE_SENTRY_DSN` | (пусто) | если задать, включит `@sentry/vue` |
 
 ## Локальная разработка (без docker)
 
-Если хочется hot-reload бэка и фронта одновременно — поднимаем БД в docker, остальное локально:
+Нужен hot-reload и для бэка, и для фронта сразу? Поднимите БД в docker, а остальное запускайте локально:
 
 ```powershell
 # 1. Только БД
@@ -123,13 +123,13 @@ dotnet ef database update -p src/FinanceTracker.Infrastructure -s src/FinanceTra
 # 3. Запустить API
 dotnet run --project src/FinanceTracker.Api
 
-# 4. В отдельном окне — фронт
+# 4. Отдельное окно: фронт
 cd web
 npm install
 npm run dev
 ```
 
-Vite при этом проксирует `/api` и `/hubs` на `localhost:5050` (см. `web/vite.config.ts`).
+Vite здесь проксирует `/api` и `/hubs` на `localhost:5050`, настройка лежит в `web/vite.config.ts`.
 
 ## Миграции
 
@@ -147,7 +147,7 @@ dotnet ef database update <PreviousMigrationName> -p src/FinanceTracker.Infrastr
 dotnet ef database update 0 -p src/FinanceTracker.Infrastructure -s src/FinanceTracker.Api
 ```
 
-В docker-compose миграции применяются автоматически сервисом `migrator` (self-contained EF bundle, см. `src/FinanceTracker.Api/Dockerfile.migrator`).
+В docker-compose миграции автоматически накатывает сервис `migrator`, самодостаточный EF-бандл. Его сборка описана в `src/FinanceTracker.Api/Dockerfile.migrator`.
 
 ## Тесты
 
@@ -163,13 +163,13 @@ npm run test           # Vitest (jsdom)
 
 ## Безопасность
 
-- Пароли — BCrypt с work factor 12.
-- JWT подписан HS256, ключ ≥ 32 символов, валидация iss/aud/exp/nbf.
-- Refresh-токены ротируются на каждый refresh, в БД лежит SHA-256 хэш (не raw).
-- Все мутации идут с `Idempotency-Key` (защита от двойных POST).
-- ProblemDetails-ответы локализованы на русский.
-- На фронте: silent refresh single-flight, Zod-парсинг ответов, безопасные cookie не используются (JWT в памяти + localStorage с auto-recovery).
-- В прод-сборке web-контейнера nginx отдаёт CSP-friendly headers: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
+- Пароли хранятся через BCrypt с work factor 12.
+- JWT подписан HS256, ключ не короче 32 символов, проверяются iss/aud/exp/nbf.
+- Refresh-токены ротируются на каждый refresh, в базе хранится только их SHA-256 хэш.
+- Все мутации идут с `Idempotency-Key`, чтобы случайный повторный POST не выполнился дважды.
+- Ответы ProblemDetails локализованы на русский.
+- На фронте: silent refresh запускается только одним потоком за раз, ответы проходят через Zod-парсинг, JWT живёт в памяти и в localStorage с автовосстановлением.
+- В прод-сборке web-контейнера nginx отдаёт заголовки `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
 
 ## Лицензия
 
