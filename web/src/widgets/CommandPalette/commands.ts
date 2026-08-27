@@ -114,13 +114,11 @@ export const commandSections: CommandSection[] = [
   }
 ]
 
-/** Lowercased substring match across title + hint + keywords. */
 export function matchItem(itemSearchHay: string, query: string): boolean {
   if (!query) return true
   return itemSearchHay.includes(query.toLowerCase())
 }
 
-/** Pre-built search hay per item id, computed once. */
 export function buildSearchHay(): Map<string, string> {
   const hay = new Map<string, string>()
   for (const section of commandSections) {

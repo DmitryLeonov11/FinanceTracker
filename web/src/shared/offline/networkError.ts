@@ -1,19 +1,15 @@
 import { ApiError } from '@/shared/api/errors'
 
-/**
- * Status === 0 is what our http.ts sets when axios can't reach the server
- * (no `error.response`). Treat as "queue and retry later".
- */
+// status === 0 — так http.ts помечает случаи, когда axios вообще не достучался до сервера
+// (нет error.response). Это повод положить операцию в очередь и повторить позже.
 export function isNetworkError(err: unknown): boolean {
   if (err instanceof ApiError) return err.status === 0
-  if (err instanceof TypeError) return true  // fetch-level network failure
+  if (err instanceof TypeError) return true
   return false
 }
 
-/**
- * Errors that mean "this op will never succeed — drop it from the queue".
- * 4xx except 408 (timeout) / 425 (too early) / 429 (rate limit).
- */
+// Ошибки, после которых операцию бессмысленно повторять — сразу убираем из очереди.
+// 4xx, кроме 408 (таймаут), 425 (too early) и 429 (rate limit) — те временные.
 export function isPermanent(err: unknown): boolean {
   if (!(err instanceof ApiError)) return false
   if (err.status < 400 || err.status >= 500) return false

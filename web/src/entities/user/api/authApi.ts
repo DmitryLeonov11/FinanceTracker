@@ -8,10 +8,11 @@ import {
 
 export const authApi = {
   async register(cmd: RegisterCommand): Promise<AuthResult> {
+    // _skipAuth читает интерцептор в http.ts: без него 401 на регистрации/логине/рефреше
+    // зациклил бы refresh-логику
     const { data } = await http.post('/auth/register', cmd, {
-      // refresh interceptor would loop on register if 401 happened — skip auth
       headers: {},
-      // @ts-expect-error custom flag picked up by interceptor
+      // @ts-expect-error custom flag
       _skipAuth: true
     })
     return AuthResultSchema.parse(data)

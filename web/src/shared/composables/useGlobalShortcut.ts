@@ -3,12 +3,9 @@ import { onKeyStroke } from '@vueuse/core'
 export type ShortcutHandler = (e: KeyboardEvent) => void
 
 interface ShortcutOptions {
-  /** Cmd on macOS, Ctrl elsewhere. Default: true */
   mod?: boolean
   shift?: boolean
-  /** Trigger even when focus is inside an input/textarea/contenteditable. Default: false */
   allowInInputs?: boolean
-  /** Call preventDefault on match. Default: true */
   preventDefault?: boolean
 }
 
@@ -19,12 +16,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
 }
 
-/**
- * Cross-platform global keyboard shortcut. Uses VueUse `onKeyStroke`,
- * adds modifier-key handling (Cmd on mac, Ctrl elsewhere) and an
- * input-aware bypass so palette-style shortcuts still work while a user
- * is typing in a field.
- */
+// Cmd на mac, Ctrl везде остальные; по умолчанию срабатывает даже когда фокус в поле ввода,
+// чтобы шорткут палитры команд не терялся во время набора текста.
 export function useGlobalShortcut(
   key: string,
   handler: ShortcutHandler,

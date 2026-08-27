@@ -12,11 +12,8 @@ interface ThresholdPayload {
   progressPercent: number
 }
 
-/**
- * Subscribes to realtime `budget.threshold-reached` events and surfaces a
- * toast with the relevant budget summary. Mount once at app-shell level so
- * the toast appears regardless of which route the user is currently on.
- */
+// Подписка на realtime-событие budget.threshold-reached. Монтируется один раз на уровне
+// app-shell, чтобы тост всплывал независимо от текущего роута.
 export function useBudgetThresholdToasts() {
   let off: (() => void) | null = null
 

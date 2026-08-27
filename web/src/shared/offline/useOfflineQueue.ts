@@ -6,14 +6,12 @@ import { replayQueue } from './replay'
 
 let bootstrapped = false
 
-/** Composable for components: reactive offline-queue stats + manual replay. */
 export function useOfflineQueue() {
   const isOnline = useOnline()
 
   onMounted(async () => {
     if (bootstrapped) return
     bootstrapped = true
-    // hydrate the in-memory queue and reactive ids on first mount
     await loadQueue()
     refreshPendingIds()
   })

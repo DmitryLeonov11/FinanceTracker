@@ -11,7 +11,6 @@ export interface QueuedOpBase {
 export interface QueuedTransactionCreate extends QueuedOpBase {
   type: 'transaction.create'
   payload: AddTransactionCommand
-  /** Pre-built record to inject into Vue Query cache and dashboard balance. */
   optimistic: Transaction
 }
 

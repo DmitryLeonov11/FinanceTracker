@@ -26,7 +26,6 @@ const types = ref<TransactionType[]>([])
 const search = ref('')
 const page = ref(1)
 
-// reset page when any other filter changes
 watch([period, accountIds, categoryIds, types, search], () => {
   page.value = 1
 })
@@ -57,7 +56,7 @@ const filters = computed<TransactionFilters>(() => {
 const { data, isPending, isFetching } = useTransactions(filters)
 const { data: accountsData } = useAccounts()
 
-// Accumulate pages — TanStack returns the current page; we keep prior pages locally
+// TanStack отдаёт только текущую страницу — прошлые накапливаем сами для бесконечной прокрутки
 const accumulated = ref<Transaction[]>([])
 watch(
   [data, page],

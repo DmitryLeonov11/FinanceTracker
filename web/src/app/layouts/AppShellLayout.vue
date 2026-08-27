@@ -80,10 +80,8 @@ watch(() => route.fullPath, () => ui.closeMobileSidebar())
         cn(
           'flex flex-col border-r border-border bg-surface',
           'transition-[width,transform] duration-200',
-          // mobile: fixed drawer, slide from left
           'fixed inset-y-0 left-0 z-50 w-[260px] md:static md:z-auto md:w-auto',
           ui.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          // desktop width
           ui.sidebarCollapsed ? 'md:w-[72px]' : 'md:w-[240px]'
         )
       "

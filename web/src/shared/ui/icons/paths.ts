@@ -1,7 +1,4 @@
-/**
- * Custom icon set — minimal, hand-tuned SVG paths at 24×24, stroke 1.5.
- * Inspired by Linear/Geist style: flat-end caps, soft corners, no decoration.
- */
+// Свой набор иконок: SVG-пути 24×24, stroke 1.5, без сторонней библиотеки иконок.
 
 export const ICON_PATHS = {
   /* brand */

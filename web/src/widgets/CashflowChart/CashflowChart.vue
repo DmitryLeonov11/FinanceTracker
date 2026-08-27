@@ -46,7 +46,6 @@ const chartOption = computed<EChartsOption | null>(() => {
   const expenses = data.value.points.map((p) => -p.expense)
 
   const labels = dates.map((d) => fmtDayMonth(d))
-  // sparse axis labels to avoid clutter
   const visibleLabelInterval = Math.max(1, Math.floor(dates.length / 8))
 
   return {

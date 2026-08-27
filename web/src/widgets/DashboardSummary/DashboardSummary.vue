@@ -19,8 +19,7 @@ const isApproximate = computed(() => data.value?.grandTotalIsApproximate ?? fals
 
 const breakdownCurrencies = computed(() => {
   const all = data.value?.balancesByCurrency ?? []
-  // Show all currencies as breakdown when multi-currency; for single currency,
-  // hide breakdown because GrandTotal already shows the only number.
+  // при одной валюте breakdown не нужен — GrandTotal и так покажет единственное число
   return all.length > 1 ? all : []
 })
 

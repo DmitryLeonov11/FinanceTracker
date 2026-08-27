@@ -1,8 +1,5 @@
-/**
- * Minimal i18n: project is Russian-first.
- * Using a flat dict so keys are visible in code and easy to grep.
- * Switch to vue-i18n if a second locale is ever needed.
- */
+// Плоский словарь вместо vue-i18n: проект русскоязычный, второй язык не планируется,
+// а плоские ключи проще искать по коду.
 export const ru = {
   app: {
     name: 'Finance Tracker',

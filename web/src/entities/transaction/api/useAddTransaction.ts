@@ -21,13 +21,11 @@ function getAccount(qc: QueryClient, accountId: string): Account | undefined {
 }
 
 function applyOptimisticToCache(qc: QueryClient, optimistic: Transaction) {
-  // 1) Prepend to every cached transactions page
   qc.setQueriesData<{ items: Transaction[]; total: number; hasMore: boolean }>(
     { queryKey: ['transactions'] },
     (old) => (old ? { ...old, items: [optimistic, ...old.items], total: old.total + 1 } : old)
   )
 
-  // 2) Adjust dashboard balance: shift the relevant account + currency total
   qc.setQueryData<DashboardBalance>(['dashboard', 'balance'], (old) => {
     if (!old) return old
     const delta = optimistic.type === 'Income' ? optimistic.amount : -optimistic.amount

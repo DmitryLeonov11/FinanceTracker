@@ -33,7 +33,7 @@ if (env.VITE_SENTRY_DSN) {
 }
 
 const auth = useAuthStore()
-useUiStore() // initialize theme listener
+useUiStore()
 
 configureHttp({
   getAccessToken: () => auth.accessToken,
@@ -54,7 +54,7 @@ if (auth.isAuthenticated) {
   })
 }
 
-// Hydrate offline queue from IndexedDB and replay anything pending from a previous session
+// поднимаем офлайн-очередь из IndexedDB и досылаем то, что осталось с прошлой сессии
 void loadQueue().then(() => {
   refreshPendingIds()
   const idle = (cb: () => void) =>

@@ -47,11 +47,7 @@ function readTokens(isDark: boolean): ChartTokens {
   }
 }
 
-/**
- * Reactive ECharts color tokens. Re-reads CSS variables from `:root`
- * whenever the theme flips. Plug the returned `tokens` ref into your
- * echarts option computed and the chart picks up the new theme automatically.
- */
+// Реактивные цветовые токены для ECharts: при смене темы перечитывают CSS-переменные из :root.
 export function useChartTokens() {
   const ui = useUiStore()
   const tokens = ref<ChartTokens>(readTokens(ui.isDark))
