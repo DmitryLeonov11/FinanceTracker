@@ -63,9 +63,9 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            // Two concurrent writes touched the same aggregate (e.g. balance updates on one account).
-            // The optimistic-concurrency token rejected the second write — surface a retriable 409
-            // instead of a generic 500 so the client can simply replay the request.
+            // Два параллельных изменения одного агрегата (например, баланса счёта) — токен
+            // оптимистичной блокировки отклонил вторую запись. Отдаём 409, а не 500, чтобы клиент
+            // мог просто повторить запрос.
             if (context.Response.HasStarted)
             {
                 _logger.LogWarning(ex, "Response already started, cannot write concurrency error");

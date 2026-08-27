@@ -8,12 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace FinanceTracker.Application.Budgets.Notifications;
 
-/// <summary>
-/// For each active budget that this expense affects, evaluates whether the
-/// spent total crossed a 50/80/100% threshold upward. Pushes a SignalR event
-/// for the frontend to surface a toast. Errors are swallowed so a failed
-/// notification never breaks the originating mutation.
-/// </summary>
+// Ошибку глотаем и только логируем: уведомление о пороге бюджета не должно
+// откатывать уже сохранённую транзакцию.
 public sealed class ExpenseRecordedNotificationHandler : INotificationHandler<ExpenseRecordedNotification>
 {
     private readonly IApplicationDbContext _db;

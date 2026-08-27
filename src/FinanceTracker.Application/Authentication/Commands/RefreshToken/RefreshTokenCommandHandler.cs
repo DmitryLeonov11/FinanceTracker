@@ -25,8 +25,8 @@ public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCom
             .SingleOrDefaultAsync(rt => rt.TokenHash == hash, cancellationToken)
             ?? throw new ForbiddenAccessException("Недействительный refresh-токен.");
 
-        // Reuse detection (OWASP): a revoked token has already been rotated. Presenting it again
-        // signals theft — revoke the whole active chain so a leaked token can't keep refreshing.
+        // Отозванный токен уже был заменён при ротации. Если его снова пытаются использовать —
+        // это признак кражи (OWASP), отзываем всю цепочку, чтобы утёкший токен не работал дальше.
         if (token.IsRevoked)
         {
             var compromisedUser = await _db.Users

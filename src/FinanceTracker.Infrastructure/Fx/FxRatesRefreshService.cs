@@ -110,7 +110,6 @@ internal sealed class FxRatesRefreshService : BackgroundService
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // shutdown
         }
         catch (Exception ex)
         {

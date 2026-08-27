@@ -41,9 +41,8 @@ public sealed class GetBudgetsQueryHandler : IRequestHandler<GetBudgetsQuery, IR
         if (budgets.Count == 0)
             return Array.Empty<BudgetWithProgressDto>();
 
-        // Precompute each budget's active window, then pull all candidate expenses in a single
-        // query over their union range and aggregate per budget in memory — avoids the previous
-        // N+1 (one SUM round-trip per budget).
+        // Считаем окна всех бюджетов заранее и берём расходы одним запросом по общему диапазону,
+        // а суммируем на бюджет уже в памяти — иначе получаем N+1 (отдельный SUM на каждый бюджет).
         var windows = budgets
             .Select(b => BudgetPeriodCalculator.GetCurrentWindow(b.Period, b.StartDate, now))
             .ToArray();

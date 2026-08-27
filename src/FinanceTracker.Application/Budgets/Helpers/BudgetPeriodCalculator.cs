@@ -2,10 +2,6 @@ using FinanceTracker.Domain.Budgets;
 
 namespace FinanceTracker.Application.Budgets.Helpers;
 
-/// <summary>
-/// Calculates the current window of a recurring budget period anchored at <c>startDate</c>.
-/// Windows are aligned to calendar boundaries (Mon–Sun for week, 1st of month for month, etc.).
-/// </summary>
 public static class BudgetPeriodCalculator
 {
     public static (DateTimeOffset From, DateTimeOffset To) GetCurrentWindow(
@@ -23,7 +19,8 @@ public static class BudgetPeriodCalculator
         {
             case BudgetPeriod.Week:
             {
-                var diff = ((int)today.DayOfWeek + 6) % 7; // Monday=0, Sunday=6
+                // неделя бюджета всегда начинается с понедельника, а не с воскресенья
+                var diff = ((int)today.DayOfWeek + 6) % 7;
                 alignedStart = today.AddDays(-diff);
                 windowEnd = alignedStart.AddDays(7);
                 break;

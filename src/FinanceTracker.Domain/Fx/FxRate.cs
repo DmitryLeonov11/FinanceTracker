@@ -3,10 +3,7 @@ using FinanceTracker.Domain.Exceptions;
 
 namespace FinanceTracker.Domain.Fx;
 
-/// <summary>
-/// 1 unit of <see cref="Currency"/> equals <see cref="RateToUsd"/> USD.
-/// USD anchor: <c>RateToUsd = 1.0</c>.
-/// </summary>
+// USD — валюта-якорь, для неё RateToUsd всегда равен 1.
 public sealed class FxRate : AggregateRoot
 {
     public DateOnly Date { get; private set; }

@@ -27,8 +27,8 @@ public sealed class SignalRRealtimeNotifier : IRealtimeNotifier
         }
         catch (Exception ex)
         {
-            // A failed realtime push must never roll back an already-committed command. The change
-            // is persisted; clients reconcile on next fetch/reconnect, so we log and swallow.
+            // Сбой realtime-пуша не должен откатывать уже закоммиченную команду: данные сохранены,
+            // клиент досинхронизируется при следующем запросе или переподключении.
             _logger.LogWarning(ex, "Не удалось отправить realtime-уведомление '{EventName}' пользователю {UserId}", eventName, userId);
         }
     }

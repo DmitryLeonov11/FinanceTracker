@@ -41,7 +41,6 @@ public sealed class MoneyConverter : IMoneyConverter
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new DomainException($"Курс для валюты {target.Code} на {cutoff:yyyy-MM-dd} не найден.");
 
-        // amount_target = amount_source * (rateSource_to_usd / rateTarget_to_usd)
         var crossRate = rateSource.RateToUsd / rateTarget.RateToUsd;
         var resultAmount = decimal.Round(source.Amount * crossRate, 4, MidpointRounding.AwayFromZero);
 

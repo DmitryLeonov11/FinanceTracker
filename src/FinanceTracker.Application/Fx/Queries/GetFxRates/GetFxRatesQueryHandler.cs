@@ -14,7 +14,6 @@ public sealed class GetFxRatesQueryHandler : IRequestHandler<GetFxRatesQuery, IR
 
     public async Task<IReadOnlyCollection<FxRateDto>> Handle(GetFxRatesQuery request, CancellationToken cancellationToken)
     {
-        // Latest rate per supported currency.
         var latest = await _db.FxRates
             .AsNoTracking()
             .GroupBy(r => r.Currency)
