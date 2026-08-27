@@ -32,18 +32,11 @@ public sealed class CreateAccountCommandHandler : IRequestHandler<CreateAccountC
         _db.Accounts.Add(account);
         await _db.SaveChangesAsync(cancellationToken);
 
-        try
-        {
-            await _notifier.NotifyUserAsync(
-                userId,
-                "account.created",
-                new { account.Id, account.Name, Currency = account.Currency.Code, Balance = account.Balance.Amount },
-                cancellationToken);
-        }
-        catch (Exception)
-        {
-            // realtime delivery is best-effort; the command itself has succeeded
-        }
+        await _notifier.NotifyUserAsync(
+            userId,
+            "account.created",
+            new { account.Id, account.Name, Currency = account.Currency.Code, Balance = account.Balance.Amount },
+            cancellationToken);
 
         return new AccountDto(
             account.Id,

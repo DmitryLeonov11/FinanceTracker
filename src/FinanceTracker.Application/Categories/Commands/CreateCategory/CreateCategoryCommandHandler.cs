@@ -41,18 +41,11 @@ public sealed class CreateCategoryCommandHandler : IRequestHandler<CreateCategor
         _db.Categories.Add(category);
         await _db.SaveChangesAsync(cancellationToken);
 
-        try
-        {
-            await _notifier.NotifyUserAsync(
-                userId,
-                "category.created",
-                new { category.Id, category.Name, category.Kind, category.ParentId },
-                cancellationToken);
-        }
-        catch (Exception)
-        {
-            // realtime delivery is best-effort
-        }
+        await _notifier.NotifyUserAsync(
+            userId,
+            "category.created",
+            new { category.Id, category.Name, category.Kind, category.ParentId },
+            cancellationToken);
 
         return new CategoryDto(
             category.Id,
